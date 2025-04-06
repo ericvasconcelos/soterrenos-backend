@@ -3,31 +3,15 @@ import { Type } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
-  IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
+  Length,
   Matches,
   MinLength,
   ValidateNested,
 } from 'class-validator';
-
-class ProfileImageDto {
-  @IsString()
-  src: string;
-
-  @IsOptional()
-  @IsNumber()
-  width?: number;
-
-  @IsOptional()
-  @IsNumber()
-  height?: number;
-
-  @IsOptional()
-  @IsString()
-  alt?: string;
-}
+import { ImageDto } from 'src/common/dto';
+import { IsCPF } from '../decorators/cpf.decorator';
 
 export class CreateUserDto {
   @IsEnum(['agency', 'owner', 'salesperson'])
@@ -44,9 +28,6 @@ export class CreateUserDto {
   })
   password: string;
 
-  @IsNotEmpty()
-  confirmPassword: string;
-
   @IsString()
   @Matches(/^\(\d{2}\) \d{4,5}-\d{4}$/, {
     message: 'Phone number must be in format (XX) XXXX-XXXX or (XX) XXXXX-XXXX',
@@ -58,7 +39,49 @@ export class CreateUserDto {
   whatsappNumber: string;
 
   @ValidateNested()
-  @Type(() => ProfileImageDto)
+  @Type(() => ImageDto)
   @IsOptional()
-  profileImage?: ProfileImageDto;
+  profileImage?: ImageDto;
+
+  // owner and salesperson
+  @IsOptional()
+  @IsString()
+  @Length(2, 255)
+  personalFirstName?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(2, 255)
+  personalLastName?: string;
+
+  @IsOptional()
+  @IsCPF()
+  @Length(14, 14)
+  personalId?: string;
+
+  // salesperson
+  @IsOptional()
+  @IsString()
+  creci?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(2, 2)
+  creciState?: string;
+
+  // agency
+  @IsOptional()
+  @IsString()
+  @Length(2, 255)
+  legalName?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(2, 255)
+  tradeName?: string;
+
+  // @IsCNPJ()
+  @IsOptional()
+  @Length(18, 18)
+  companyId?: string;
 }
