@@ -1,0 +1,141 @@
+### Variables 
+@apiurl = http://localhost:3000
+
+
+####################################################
+### USERS
+####################################################
+
+# @name UsersController
+### findAll
+GET {{apiurl}}/users
+
+### findOne
+GET {{apiurl}}/users/8d700d9a-030a-4122-9641-4f0f10fba7fb
+
+### create
+POST {{apiurl}}/users
+Content-Type: application/json
+
+{
+  "type": "owner",
+  "email": "teste@gmail.com",
+  "password": "Teste@123",
+  "phoneNumber": "(61) 99239-1847",
+  "whatsappNumber": "(61) 99239-1847",
+  "personalFirstName": "Eric",
+  "personalLastName": "Vasconcelos",
+  "personalId": "132.321.827-04"
+}
+
+### update
+PATCH {{apiurl}}/users/0315e118-91a4-49bc-957b-af1e50902862
+Content-Type: application/json
+
+{
+  "isConfirmed": true
+}
+
+### delete
+DELETE {{apiurl}}/users/6ebffc4d-7b33-4639-98a5-cfaf0e973a4c
+
+
+####################################################
+### LANDS
+####################################################
+
+# @name LandsController
+### findAll
+GET {{apiurl}}/lands?offset=0&limit=10
+Authorization: Bearer mytoken
+
+### findOne
+GET {{apiurl}}/lands/083a4702-6152-4379-83ed-4ef691a8c15c
+
+### create
+POST {{apiurl}}/lands
+Content-Type: application/json
+
+{
+  "title": "Park Way Lote/terreno A Venda Quadra 23 Conjunto 3",
+  "userId": "f4422ca1-9b3f-46dd-93db-41abd6aced69",
+  "active": true,
+  "images": [
+    {     
+      "src": "http://www.anuncios/images/4355127664.jpg",
+      "width": 500,
+      "height": 559
+    }
+  ],
+  "address": {
+    "zipCode": "71936250",
+    "street": "Avenida das Araucárias",
+    "number": "4400",
+    "complement": "Bloco C",
+    "neighborhood": "Águas Claras",
+    "city": "Brasília",
+    "state": "DF",
+    "condominium": ""
+  },
+  "landSize": {
+    "front": 10,
+    "left": 12.5,
+    "right": 12,
+    "back": 9
+  },
+  "price": 100000.00,
+  "condominiumTax": 150.00,
+  "propertyTax": 200.00,
+  "financingAvailable": true,
+  "fgts": false,
+  "description": "Executive House Imobiliária vende: lote de 2.500m², com área verde de 2.500m2;\n- Lote de fundo com casa de caseiro;\n- Plano;\n- Com área Verde de 2.500m2;\n- Condomínio com pavimentação;\n- Árvores frutíferas;\n- Escriturado.\nLigue a qualquer momento e agende uma visita com um de nossos corretores.",
+  "hasWater": true,
+  "hasArtesianWell": true,
+  "hasSewageSystem": true,
+  "hasEletricity": true,
+  "hasGas": true,
+  "hasInternet": true,
+  "isFenced": true,
+  "isLandLeveled": true,
+  "isLotClear": true,
+  "soil": "clay", 
+  "slope": "downhill", 
+  "zoning": "residential", 
+  "sunPosition": "east-facing", 
+  "established": true,
+  "paved": true,
+  "streetLighting": true,
+  "sanitationBasic": true,
+  "sidewalks": true,
+  "gatedEntrance": true,
+  "security": true,
+  "commonAreas": [ "sports_court", "party_hall", "gym", "swimming_pool", "sauna", "playground" ], 
+  "publicTransportation": ["train", "subway", "bus"],
+  "restaurant": true,
+  "school": true,
+  "hospital": true,
+  "supermarket": true,
+  "drugstore": true,
+  "gasStation": true,
+  "bank": true
+}
+
+### update
+PATCH {{apiurl}}/lands/ee5a294a-8a55-40fc-9b1f-75c6c76d8237
+Content-Type: application/json
+
+{
+  "title": "Terreno 300m2 na casa joana",
+  "soil": "sandy", 
+  "slope": "flat", 
+  "zoning": "commercial", 
+  "sunPosition": "west-facing", 
+  "commonAreas": [], 
+  "publicTransportation": []
+}
+
+### delete
+DELETE {{apiurl}}/lands/0315e118-91a4-49bc-957b-af1e50902862
+
+
+

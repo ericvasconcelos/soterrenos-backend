@@ -1,12 +1,13 @@
+import { IsEmail } from 'class-validator';
+import { ImageDto } from 'src/common/dto';
 import {
   Column,
+  CreateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
-  TableInheritance,
 } from 'typeorm';
 
 @Entity()
-@TableInheritance({ column: { type: 'varchar', name: 'type' } })
 export abstract class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -15,81 +16,51 @@ export abstract class User {
   type: 'agency' | 'owner' | 'salesperson';
 
   @Column({ unique: true })
+  @IsEmail()
   email: string;
 
-  @Column()
+  @Column({ length: 255 })
   password: string;
 
-  @Column({ name: 'phone_number' })
+  @Column()
   phoneNumber: string;
 
-  @Column({ type: 'boolean', default: false })
-  isConfirmed: boolean;
+  @Column()
+  whatsappNumber: string;
 
-  @Column({ name: 'confirmation_token', nullable: true })
-  confirmationToken: string;
+  @Column({ default: false })
+  isConfirmed?: boolean;
 
-  @Column({
-    type: 'timestamptz',
-    name: 'created_at',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  createdAt: Date;
+  @CreateDateColumn()
+  createdAt?: Date;
 
-  @Column({
-    type: 'timestamptz',
-    name: 'updated_at',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  updatedAt: Date;
+  @CreateDateColumn()
+  updatedAt?: Date;
 
   @Column({ type: 'jsonb', nullable: true })
-  profileImage: {
-    src: string;
-    width?: number;
-    height?: number;
-    alt?: string;
-  };
-}
+  profileImage?: ImageDto;
 
-@Entity()
-export class Agency extends User {
-  @Column({ name: 'legal_name' })
-  legalName: string;
+  @Column({ length: 255, default: '' })
+  personalFirstName?: string;
 
-  @Column({ name: 'trade_name' })
-  tradeName: string;
+  @Column({ length: 255, default: '' })
+  personalLastName?: string;
 
-  @Column({ name: 'company_id' })
-  companyId: string;
-}
+  @Column({ length: 14, default: '' })
+  personalId?: string;
 
-@Entity()
-export class Owner extends User {
-  @Column({ name: 'personal_name' })
-  personalName: string;
+  @Column({ length: 255, default: '' })
+  legalName?: string;
 
-  @Column({ name: 'personal_last_name' })
-  personalLastName: string;
+  @Column({ length: 255, default: '' })
+  tradeName?: string;
 
-  @Column({ name: 'personal_id' })
-  personalId: string;
-}
+  @Column({ length: 18, default: '' })
+  companyId?: string;
 
-@Entity()
-export class Salesperson extends User {
-  @Column({ name: 'personal_name' })
-  personalName: string;
+  @Column({ length: 25, default: '' })
+  creci?: string;
 
-  @Column({ name: 'personal_last_name' })
-  personalLastName: string;
-
-  @Column({ name: 'personal_id' })
-  personalId: string;
-
-  @Column()
-  creci: string;
-
-  @Column({ name: 'creci_state', length: 2 })
-  creciState: string;
+  @Column({ length: 2, default: '' })
+  creciState?: string;
 }

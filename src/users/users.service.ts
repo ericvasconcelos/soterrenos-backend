@@ -1,33 +1,74 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAgencyDto } from './dto/create-agency.dto';
-import { CreateOwnerDto } from './dto/create-owner.dto';
-import { CreateSalespersonDto } from './dto/create-salesperson.dto';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  async createAgency(userInfos: CreateAgencyDto): Promise<CreateAgencyDto> {
-    await new Promise((resolve) => {
-      setTimeout(resolve, 2000);
-    });
+  constructor(
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
+  ) {}
 
-    return userInfos;
+  throwNotFoundError() {
+    throw new NotFoundException('USER_NOT_FOUND');
   }
 
-  async createOwner(userInfos: CreateOwnerDto): Promise<CreateOwnerDto> {
-    await new Promise((resolve) => {
-      setTimeout(resolve, 2000);
-    });
-
-    return userInfos;
+  async findAll() {
+    const users = await this.usersRepository.find();
+    return users;
   }
 
-  async createSalesperson(
-    userInfos: CreateSalespersonDto,
-  ): Promise<CreateSalespersonDto> {
-    await new Promise((resolve) => {
-      setTimeout(resolve, 2000);
+  async findOne(id: string) {
+    const user = await this.usersRepository.findOneBy({ id });
+    if (!user) return this.throwNotFoundError();
+    return user;
+  }
+
+  async create(createUserDto: CreateUserDto) {
+    // const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+
+    try {
+      const userData = {
+        ...createUserDto,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const newUser = this.usersRepository.create(userData);
+      await this.usersRepository.save(newUser);
+      return newUser;
+    } catch (error) {
+      if (error?.code === '23505') {
+        throw new ConflictException('EMAIL_ALREADY_REGISTERED');
+      }
+
+      throw error;
+    }
+  }
+
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    const user = await this.usersRepository.preload({
+      id,
+      ...updateUserDto,
+      isConfirmed: updateUserDto?.isConfirmed ?? false,
+      updatedAt: new Date(),
     });
 
-    return userInfos;
+    if (!user) return this.throwNotFoundError();
+    await this.usersRepository.save(user);
+    return user;
+  }
+
+  async remove(id: string) {
+    const user = await this.findOne(id);
+    if (!user) return this.throwNotFoundError();
+    await this.usersRepository.remove(user);
   }
 }
