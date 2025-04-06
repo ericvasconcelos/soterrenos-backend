@@ -43,7 +43,7 @@ export class UserResponseDto {
   companyId?: string;
 
   @Expose()
-  personalName?: string;
+  personalFirstName?: string;
 
   @Expose()
   personalLastName?: string;
