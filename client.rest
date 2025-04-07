@@ -1,5 +1,32 @@
 ### Variables 
-@apiurl = http://localhost:3000
+@baseUrl = http://localhost:3000
+@authToken = {{authenticate.response.body.accessToken}}
+@refreshToken = {{authenticate.response.body.refreshToken}}
+
+
+####################################################
+### AUTHENTICATION
+####################################################
+
+### auth
+# @name authenticate
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "teste@gmail.com",
+  "password": "Printi@123"
+}
+
+# Refresh
+### Re-Autenticação
+# @name reAuthenticate
+POST {{baseUrl}}/auth/refresh/
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
 
 
 ####################################################
@@ -8,37 +35,41 @@
 
 # @name UsersController
 ### findAll
-GET {{apiurl}}/users
+GET {{baseUrl}}/users
+Authorization: Bearer {{authToken}}
 
 ### findOne
-GET {{apiurl}}/users/8d700d9a-030a-4122-9641-4f0f10fba7fb
+GET {{baseUrl}}/users/8d700d9a-030a-4122-9641-4f0f10fba7fb
+Authorization: Bearer {{authToken}}
 
 ### create
-POST {{apiurl}}/users
+POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
   "type": "owner",
-  "email": "teste@gmail.com",
-  "password": "Teste@123",
+  "email": "deleted@gmail.com",
+  "password": "Printi@123",
   "phoneNumber": "(61) 99239-1847",
   "whatsappNumber": "(61) 99239-1847",
-  "personalFirstName": "Eric",
-  "personalLastName": "Vasconcelos",
+  "personalFirstName": "Delete",
+  "personalLastName": "User",
   "personalId": "132.321.827-04"
 }
 
 ### update
-PATCH {{apiurl}}/users/0315e118-91a4-49bc-957b-af1e50902862
+PATCH {{baseUrl}}/users/f4422ca1-9b3f-46dd-93db-41abd6aced69
 Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 {
-  "isConfirmed": true
+  "isConfirmed": false,
+  "personalFirstName": "Teste refresh"
 }
 
 ### delete
-DELETE {{apiurl}}/users/6ebffc4d-7b33-4639-98a5-cfaf0e973a4c
-
+DELETE {{baseUrl}}/users/79b9828e-cb5a-43e1-8660-dda889675c10
+Authorization: Bearer {{authToken}}
 
 ####################################################
 ### LANDS
@@ -46,19 +77,18 @@ DELETE {{apiurl}}/users/6ebffc4d-7b33-4639-98a5-cfaf0e973a4c
 
 # @name LandsController
 ### findAll
-GET {{apiurl}}/lands?offset=0&limit=10
-Authorization: Bearer mytoken
+GET {{baseUrl}}/lands?offset=0&limit=10
 
 ### findOne
-GET {{apiurl}}/lands/083a4702-6152-4379-83ed-4ef691a8c15c
+GET {{baseUrl}}/lands/083a4702-6152-4379-83ed-4ef691a8c15c
 
 ### create
-POST {{apiurl}}/lands
+POST {{baseUrl}}/lands
 Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 {
-  "title": "Park Way Lote/terreno A Venda Quadra 23 Conjunto 3",
-  "userId": "f4422ca1-9b3f-46dd-93db-41abd6aced69",
+  "title": "Terreno na ponte alta com valor baixo",
   "active": true,
   "images": [
     {     
@@ -121,21 +151,18 @@ Content-Type: application/json
 }
 
 ### update
-PATCH {{apiurl}}/lands/ee5a294a-8a55-40fc-9b1f-75c6c76d8237
+PATCH {{baseUrl}}/lands/b043f8a1-8c71-43b3-b0db-31fefdbbbf4b
 Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 {
   "title": "Terreno 300m2 na casa joana",
-  "soil": "sandy", 
-  "slope": "flat", 
-  "zoning": "commercial", 
-  "sunPosition": "west-facing", 
-  "commonAreas": [], 
-  "publicTransportation": []
+  "soil": "sandy"
 }
 
 ### delete
-DELETE {{apiurl}}/lands/0315e118-91a4-49bc-957b-af1e50902862
+DELETE {{baseUrl}}/lands/30559fa5-fcd6-467a-82aa-29d95129a223
+Authorization: Bearer {{authToken}}
 
 
 

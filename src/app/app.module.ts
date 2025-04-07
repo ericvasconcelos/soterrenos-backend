@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 
 import { ConfigModule, ConfigType } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from 'src/auth/auth.module';
 import { LandsModule } from '../lands/lands.module';
 import { UsersModule } from '../users/users.module';
 import appConfig from './app.config';
@@ -36,6 +37,7 @@ import appConfig from './app.config';
     }),
     UsersModule,
     LandsModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],
