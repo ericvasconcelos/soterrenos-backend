@@ -7,9 +7,6 @@ export class LandResponseDto {
   id: string;
 
   @Expose()
-  userId: string;
-
-  @Expose()
   slug: string;
 
   @Expose()

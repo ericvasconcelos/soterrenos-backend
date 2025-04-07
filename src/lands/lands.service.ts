@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
@@ -100,17 +101,11 @@ export class LandsService {
     return land;
   }
 
-  async create(createLandDto: CreateLandDto) {
+  async create(createLandDto: CreateLandDto, tokenPayload: TokenPayloadDto) {
     const slug = await this.generateUniqueSlug(createLandDto.title);
-    const user = await this.usersRepository.findOne({
-      where: {
-        id: createLandDto.userId,
-      },
-    });
+    const user = await this.usersRepository.findOneBy({ id: tokenPayload?.sub });
 
-    if (!user) {
-      throw new NotFoundException('USER_NOT_FOUND');
-    }
+    if (!user || !user?.id) throw new NotFoundException('USER_NOT_FOUND');
 
     const land = this.landsRepository.create({
       ...createLandDto,
@@ -128,10 +123,13 @@ export class LandsService {
     };
   }
 
-  async update(id: string, updateLandDto: UpdateLandDto) {
+  async update(id: string, updateLandDto: UpdateLandDto, tokenPayload: TokenPayloadDto) {
     const land = await this.findOne(id);
+    const user = await this.usersRepository.findOneBy({ id: tokenPayload?.sub })
 
     if (!land) return this.throwNotFoundError();
+    if (!user) throw new NotFoundException('USER_NOT_FOUND');
+    if (user?.id !== land?.user?.id) throw new ForbiddenException('DONT_HAVE_PERMISSION');
 
     if (updateLandDto?.title && land?.title !== updateLandDto.title) {
       land.slug = await this.generateUniqueSlug(updateLandDto.title, id);
@@ -147,9 +145,21 @@ export class LandsService {
     return newLand;
   }
 
-  async remove(id: string) {
-    const land = await this.landsRepository.findOneBy({ id });
+  async remove(id: string, tokenPayload: TokenPayloadDto) {
+    const land = await this.findOne(id);
+    const user = await this.usersRepository.findOneBy({ id: tokenPayload?.sub })
+
+    console.log('land', land)
+    console.log('user', user)
+
     if (!land) return this.throwNotFoundError();
-    return this.landsRepository.remove(land);
+    if (!user) throw new NotFoundException('USER_NOT_FOUND');
+    if (user?.id !== land?.user?.id) throw new ForbiddenException('DONT_HAVE_PERMISSION');
+
+    await this.landsRepository.remove(land);
+
+    return {
+      message: 'LAND_DELETED'
+    }
   }
 }
