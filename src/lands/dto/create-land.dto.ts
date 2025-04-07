@@ -8,10 +8,9 @@ import {
   IsOptional,
   IsPositive,
   IsString,
-  IsUUID,
   Min,
   MinLength,
-  ValidateNested,
+  ValidateNested
 } from 'class-validator';
 import { AddressDto, ImageDto, LandSizeDto } from 'src/common/dto';
 import {
@@ -24,9 +23,6 @@ import {
 } from '../types';
 
 export class CreateLandDto {
-  @IsUUID()
-  userId: string;
-
   @IsString({ message: 'TITLE_MUST_STRING' })
   @IsNotEmpty({ message: 'TITLE_REQUIRED' })
   @MinLength(5, { message: 'TITLE_MIN_LENGTH_5' })
