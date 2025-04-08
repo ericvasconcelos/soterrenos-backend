@@ -63,4 +63,7 @@ export abstract class User {
 
   @Column({ length: 2, default: '' })
   creciState?: string;
+
+  @Column({ type: 'jsonb', default: null })
+  image?: ImageDto
 }
