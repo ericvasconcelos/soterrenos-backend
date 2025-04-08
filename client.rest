@@ -80,7 +80,7 @@ Authorization: Bearer {{authToken}}
 GET {{baseUrl}}/lands?offset=0&limit=10
 
 ### findOne
-GET {{baseUrl}}/lands/083a4702-6152-4379-83ed-4ef691a8c15c
+GET {{baseUrl}}/lands/ee5a294a-8a55-40fc-9b1f-75c6c76d8237
 
 ### create
 POST {{baseUrl}}/lands

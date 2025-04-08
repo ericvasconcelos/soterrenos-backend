@@ -1,4 +1,5 @@
 import { Exclude, Expose, Type } from 'class-transformer';
+import { ImageDto } from 'src/common/dto';
 
 @Exclude()
 export class UserResponseDto {
@@ -26,12 +27,7 @@ export class UserResponseDto {
   updatedAt: Date;
 
   @Expose()
-  profileImage?: {
-    src: string;
-    width?: number;
-    height?: number;
-    alt?: string;
-  };
+  profileImage?: ImageDto;
 
   @Expose()
   legalName?: string;

@@ -58,7 +58,6 @@ export class UsersController {
     @Param('id') id: string,
     @TokenPayloadParam() tokenPayload: TokenPayloadDto
   ) {
-    console.log(id, tokenPayload)
     return this.usersService.remove(id, tokenPayload);
   }
 
