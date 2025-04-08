@@ -152,9 +152,6 @@ export class LandsService {
     const land = await this.findOne(id);
     const user = await this.usersRepository.findOneBy({ id: tokenPayload?.sub })
 
-    console.log('land', land)
-    console.log('user', user)
-
     if (!land) return this.throwNotFoundError();
     if (!user) throw new NotFoundException('USER_NOT_FOUND');
     if (user?.id !== land?.user?.id) throw new ForbiddenException('DONT_HAVE_PERMISSION');

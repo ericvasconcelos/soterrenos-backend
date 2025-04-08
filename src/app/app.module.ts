@@ -3,33 +3,42 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 import { ConfigModule, ConfigType } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as path from 'path';
 import { AuthModule } from 'src/auth/auth.module';
+import { GlobalConfigModule } from 'src/global-config/global-config.module';
+import globalConfig from 'src/global-config/global.config';
 import { LandsModule } from '../lands/lands.module';
 import { UsersModule } from '../users/users.module';
-import appConfig from './app.config';
 
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
-    ConfigModule.forFeature(appConfig),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 10000,
+        limit: 10,
+        blockDuration: 5000,
+      },
+    ]),
+    ConfigModule.forFeature(globalConfig),
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule.forFeature(appConfig)],
-      inject: [appConfig.KEY],
-      useFactory: (appConfigurations: ConfigType<typeof appConfig>) => {
+      imports: [ConfigModule.forFeature(globalConfig)],
+      inject: [globalConfig.KEY],
+      useFactory: (globalConfigurations: ConfigType<typeof globalConfig>) => {
         return {
-          type: appConfigurations.database.type,
-          host: appConfigurations.database.host,
-          port: appConfigurations.database.port,
-          username: appConfigurations.database.username,
-          database: appConfigurations.database.database,
-          password: appConfigurations.database.password,
-          autoLoadEntities: appConfigurations.database.autoLoadEntities,
-          synchronize: appConfigurations.database.synchronize,
-          // dropSchema: appConfigurations.database.dropSchema,
+          type: globalConfigurations.database.type,
+          host: globalConfigurations.database.host,
+          port: globalConfigurations.database.port,
+          username: globalConfigurations.database.username,
+          database: globalConfigurations.database.database,
+          password: globalConfigurations.database.password,
+          autoLoadEntities: globalConfigurations.database.autoLoadEntities,
+          synchronize: globalConfigurations.database.synchronize,
+          // dropSchema: globalConfigurations.database.dropSchema,
           // entities: [__dirname + '/**/*.entity{.ts,.js}'],
           // migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
           // cli: {
@@ -42,11 +51,18 @@ import appConfig from './app.config';
       rootPath: path.resolve(__dirname, '../..', 'pictures'),
       serveRoot: '/pictures',
     }),
+    GlobalConfigModule,
     UsersModule,
     LandsModule,
-    AuthModule
+    AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    }
+  ],
 })
 export class AppModule { }
