@@ -26,7 +26,7 @@ export class UserResponseDto {
   updatedAt: Date;
 
   @Expose()
-  profileImage: {
+  profileImage?: {
     src: string;
     width?: number;
     height?: number;
