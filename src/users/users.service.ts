@@ -116,7 +116,7 @@ export class UsersService {
 
     return await this.update(
       tokenPayload.sub,
-      { image: { src: `/pictures/${fileName}` } },
+      { profileImage: { src: `/pictures/${fileName}` } },
       tokenPayload
     )
   }

@@ -1,4 +1,3 @@
-// src/users/dto/create-user.dto.ts
 import { Type } from 'class-transformer';
 import {
   IsEmail,
@@ -11,6 +10,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ImageDto } from 'src/common/dto';
+import { IsCNPJ } from '../decorators/cnpj.decorator';
 import { IsCPF } from '../decorators/cpf.decorator';
 import { UserType } from './user-type';
 
@@ -39,9 +39,9 @@ export class CreateUserDto {
   @Matches(/^\(\d{2}\) \d{4,5}-\d{4}$/)
   whatsappNumber: string;
 
+  @IsOptional()
   @ValidateNested()
   @Type(() => ImageDto)
-  @IsOptional()
   profileImage?: ImageDto;
 
   // owner and salesperson
@@ -81,8 +81,8 @@ export class CreateUserDto {
   @Length(2, 255)
   tradeName?: string;
 
-  // @IsCNPJ()
   @IsOptional()
+  @IsCNPJ()
   @Length(18, 18)
   companyId?: string;
 }
