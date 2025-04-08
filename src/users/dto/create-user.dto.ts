@@ -12,10 +12,11 @@ import {
 } from 'class-validator';
 import { ImageDto } from 'src/common/dto';
 import { IsCPF } from '../decorators/cpf.decorator';
+import { UserType } from './user-type';
 
 export class CreateUserDto {
   @IsEnum(['agency', 'owner', 'salesperson'])
-  type: 'agency' | 'owner' | 'salesperson';
+  type: UserType;
 
   @IsEmail()
   email: string;

@@ -24,7 +24,7 @@ export class UsersService {
     private readonly hashingService: HashingService
   ) { }
 
-  throwNotFoundError() {
+  private throwNotFoundError() {
     throw new NotFoundException('USER_NOT_FOUND');
   }
 
@@ -91,6 +91,9 @@ export class UsersService {
     if (!user) return this.throwNotFoundError();
     if (id !== tokenPayload?.sub) throw new ForbiddenException('DONT_HAVE_PERMISSION')
     await this.usersRepository.remove(user);
+    return {
+      message: 'USER_DELETED'
+    }
   }
 
   async uploadPicture(
