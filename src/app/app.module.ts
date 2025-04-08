@@ -3,11 +3,14 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 import { ConfigModule, ConfigType } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import * as path from 'path';
 import { AuthModule } from 'src/auth/auth.module';
 import { LandsModule } from '../lands/lands.module';
 import { UsersModule } from '../users/users.module';
 import appConfig from './app.config';
+
 
 @Module({
   imports: [
@@ -34,6 +37,10 @@ import appConfig from './app.config';
           // },
         };
       },
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: path.resolve(__dirname, '../..', 'pictures'),
+      serveRoot: '/pictures',
     }),
     UsersModule,
     LandsModule,

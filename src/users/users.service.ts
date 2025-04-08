@@ -1,10 +1,14 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as fs from 'fs/promises';
+import { filetypeextension } from 'magic-bytes.js';
+import * as path from 'path';
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 import { HashingService } from 'src/auth/hashing/hashing.service';
 import { Repository } from 'typeorm';
@@ -87,5 +91,30 @@ export class UsersService {
     if (!user) return this.throwNotFoundError();
     if (id !== tokenPayload?.sub) throw new ForbiddenException('DONT_HAVE_PERMISSION')
     await this.usersRepository.remove(user);
+  }
+
+  async uploadPicture(
+    file: Express.Multer.File,
+    tokenPayload: TokenPayloadDto,
+  ) {
+    const ALLOWED_MIME_TYPES = new Set(['jpeg', 'jpg', 'png']);
+
+    if (file.size < 1024) throw new BadRequestException('FILE_SMALL')
+
+    const fileTypeExtension = filetypeextension(file.buffer as Buffer)[0];
+    if (!fileTypeExtension || !ALLOWED_MIME_TYPES.has(fileTypeExtension)) {
+      throw new BadRequestException('INVALID_FILE_TYPE');
+    }
+
+    const fileName = `profile-${tokenPayload.sub}.${fileTypeExtension}`;
+    const fileFullPath = path.resolve(process.cwd(), 'pictures', fileName);
+
+    await fs.writeFile(fileFullPath, file.buffer as Buffer);
+
+    return await this.update(
+      tokenPayload.sub,
+      { image: { src: `/pictures/${fileName}` } },
+      tokenPayload
+    )
   }
 }

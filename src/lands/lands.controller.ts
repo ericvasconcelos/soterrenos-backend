@@ -9,8 +9,11 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 import { AuthTokenGuard } from 'src/auth/guards/auth-token.guard';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -55,5 +58,12 @@ export class LandsController {
   @Delete(':id')
   remove(@Param('id') id: string, @TokenPayloadParam() tokenPayload: TokenPayloadDto) {
     return this.landsService.remove(id, tokenPayload);
+  }
+
+  @UseGuards(AuthTokenGuard)
+  @UseInterceptors(FilesInterceptor('file'))
+  @Post('upload-files')
+  async uploadFiles(@UploadedFiles() files: Array<Express.Multer.File>) {
+    return this.landsService.uploadFiles(files)
   }
 }
