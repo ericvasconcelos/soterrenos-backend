@@ -1,5 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { randomUUID } from 'crypto';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { User } from 'src/users/entities/user.entity';
@@ -160,6 +163,30 @@ export class LandsService {
 
     return {
       message: 'LAND_DELETED'
+    }
+  }
+
+  async uploadFiles(files: Array<Express.Multer.File>) {
+    try {
+      const uploadPromises = files.map(async (file) => {
+        const fileExtension = path
+          .extname(file.originalname as string)
+          .toLowerCase()
+          .substring(1);
+
+        const fileName = `${randomUUID()}.${fileExtension}`;
+        const fileFullPath = path.resolve(process.cwd(), 'pictures', fileName);
+
+        // Escreve o arquivo e retorna o caminho completo
+        await fs.writeFile(fileFullPath, file.buffer as Buffer);
+        return { src: `/pictures/${fileName}` }
+      });
+
+      const result = await Promise.all(uploadPromises);
+      return result;
+    } catch (error) {
+      console.log(error.message)
+      throw new InternalServerErrorException('UPLOAD_FILES_FAILED');
     }
   }
 }
