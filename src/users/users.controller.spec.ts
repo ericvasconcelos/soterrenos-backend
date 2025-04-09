@@ -43,10 +43,11 @@ describe('UsersController', () => {
 
   it('findOne', async () => {
     const id = '1';
+    const tokenPayload = { sub: id } as TokenPayloadDto;
     const expected = { ...createUser, id: '1' };
     jest.spyOn(usersServiceMock, 'findOne').mockResolvedValue(expected);
-    const result = await controller.findOne(id);
-    expect(usersServiceMock.findOne).toHaveBeenCalledWith(id);
+    const result = await controller.findOne(id, tokenPayload);
+    expect(usersServiceMock.findOne).toHaveBeenCalledWith(id, tokenPayload);
     expect(result).toEqual(expected);
   });
 
