@@ -33,8 +33,8 @@ export class UsersController {
 
   @UseGuards(AuthTokenGuard)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id);
+  findOne(@Param('id') id: string, @TokenPayloadParam() tokenPayload: TokenPayloadDto) {
+    return this.usersService.findOne(id, tokenPayload);
   }
 
   @Post()

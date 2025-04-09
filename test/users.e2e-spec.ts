@@ -10,13 +10,35 @@ import { AuthModule } from 'src/auth/auth.module';
 import { GlobalConfigModule } from 'src/global-config/global-config.module';
 import globalConfig from 'src/global-config/global.config';
 import { LandsModule } from 'src/lands/lands.module';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UserFactory } from 'src/users/factories/user.factory';
 import { UsersModule } from 'src/users/users.module';
 import * as request from 'supertest';
 
+const login = async (
+  app: INestApplication,
+  user: CreateUserDto & { id: string },
+) => {
+  const response = await request(app.getHttpServer())
+    .post('/auth/login')
+    .send({ email: user.email, password: user.password });
+
+  return {
+    accessToken: response.body.accessToken,
+    user
+  }
+};
+
+const createUserAndLogin = async (app: INestApplication) => {
+  const user = UserFactory.create('owner');
+  const newUser = await request(app.getHttpServer()).post('/users').send(user);
+  return login(app, { ...user, id: newUser.body.id });
+};
+
 describe('AppController (e2e)', () => {
   let app: INestApplication;
   const createUser = UserFactory.create('owner');
+  const fakeUUID = '44f2636a-f756-4686-b37b-233b8accd128'
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -57,8 +79,6 @@ describe('AppController (e2e)', () => {
 
   describe('/users (POST)', () => {
     it('should create user', async () => {
-
-
       const response = await request(app.getHttpServer())
         .post('/users')
         .send(createUser)
@@ -132,6 +152,110 @@ describe('AppController (e2e)', () => {
       expect(response.body.message).toEqual([
         'Password must contain at least 1 uppercase, 1 lowercase, 1 number and 1 special character',
       ]);
+    });
+  });
+
+  describe('GET /users', () => {
+    it('should return all users', async () => {
+      const createdUser = await createUserAndLogin(app)
+
+      const response = await request(app.getHttpServer())
+        .get('/users')
+        .set('Authorization', `Bearer ${createdUser.accessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.body).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            personalId: createdUser.user.personalId,
+            personalFirstName: createdUser.user.personalFirstName,
+            personalLastName: createdUser.user.personalLastName,
+          }),
+        ]),
+      );
+    });
+  });
+
+  describe('GET /users/:id', () => {
+    it('should return user data', async () => {
+      const createdUser = await createUserAndLogin(app)
+
+      const response = await request(app.getHttpServer())
+        .get(`/users/${createdUser.user.id}`)
+        .set('Authorization', `Bearer ${createdUser.accessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          personalId: createdUser.user.personalId,
+          personalFirstName: createdUser.user.personalFirstName,
+          personalLastName: createdUser.user.personalLastName,
+        }),
+      );
+    });
+
+    it('should return error of user not found', async () => {
+      const createdUser = await createUserAndLogin(app)
+
+      await request(app.getHttpServer())
+        .get(`/users/${fakeUUID}`)
+        .set('Authorization', `Bearer ${createdUser.accessToken}`)
+        .expect(HttpStatus.NOT_FOUND);
+    });
+  });
+
+  describe('PATCH /users/:id', () => {
+    it('should update user', async () => {
+      const createdUser = await createUserAndLogin(app)
+      const userId = createdUser.user.id;
+
+      const updateResponse = await request(app.getHttpServer())
+        .patch(`/users/${userId}`)
+        .send({
+          personalFirstName: 'Updated',
+        })
+        .set('Authorization', `Bearer ${createdUser.accessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(updateResponse.body).toEqual(
+        expect.objectContaining({
+          id: userId,
+          personalFirstName: 'Updated',
+        }),
+      );
+    });
+
+    it('should return error of user not found', async () => {
+      const createdUser = await createUserAndLogin(app)
+
+      await request(app.getHttpServer())
+        .patch(`/users/${fakeUUID}`)
+        .send({ personalFirstName: 'Updated' })
+        .set('Authorization', `Bearer ${createdUser.accessToken}`)
+        .expect(HttpStatus.NOT_FOUND);
+    });
+  });
+
+  describe('DELETE /users/:id', () => {
+    it('sould remove user', async () => {
+      const createdUser = await createUserAndLogin(app)
+      const userId = createdUser.user.id;
+
+      const response = await request(app.getHttpServer())
+        .delete(`/users/${userId}`)
+        .set('Authorization', `Bearer ${createdUser.accessToken}`)
+        .expect(HttpStatus.OK);
+
+      expect(response.body.message).toBe('USER_DELETED');
+    });
+
+    it('should return error of user not found', async () => {
+      const createdUser = await createUserAndLogin(app)
+
+      await request(app.getHttpServer())
+        .delete(`/users/${fakeUUID}`)
+        .set('Authorization', `Bearer ${createdUser.accessToken}`)
+        .expect(HttpStatus.NOT_FOUND);
     });
   });
 });
