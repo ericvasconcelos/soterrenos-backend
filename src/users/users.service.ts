@@ -33,9 +33,10 @@ export class UsersService {
     return users;
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, tokenPayload: TokenPayloadDto) {
     const user = await this.usersRepository.findOneBy({ id });
     if (!user) return this.throwNotFoundError();
+    if (user?.id !== tokenPayload?.sub) throw new ForbiddenException('DONT_HAVE_PERMISSION')
     return user;
   }
 
