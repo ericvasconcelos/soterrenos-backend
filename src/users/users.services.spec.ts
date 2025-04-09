@@ -26,6 +26,7 @@ describe('UsersService', () => {
   const mockId = faker.string.uuid();
   const mockId2 = faker.string.uuid();
   const PASSWORD_HASH = 'hashedPassword'
+  const tokenPayload = { sub: mockId } as TokenPayloadDto
 
   const initialUserOne: CreateUserDto = UserFactory.create('owner')
   const initialUserTwo: CreateUserDto = UserFactory.create('owner')
@@ -189,7 +190,7 @@ describe('UsersService', () => {
     }
 
     it('should find user by ID', async () => {
-      const result = await usersService.findOne(mockId);
+      const result = await usersService.findOne(mockId, tokenPayload);
 
       expect(result).toEqual(expect.objectContaining({
         ...foundUser,
@@ -201,8 +202,8 @@ describe('UsersService', () => {
 
     it('should throw other errors', async () => {
       jest.spyOn(usersRepository, 'findOneBy').mockResolvedValue(null);
-      await expect(usersService.findOne('1')).rejects.toThrow(NotFoundException);
-      await expect(usersService.findOne('1')).rejects.toThrow('USER_NOT_FOUND');
+      await expect(usersService.findOne('1', tokenPayload)).rejects.toThrow(NotFoundException);
+      await expect(usersService.findOne('1', tokenPayload)).rejects.toThrow('USER_NOT_FOUND');
     });
   });
 
@@ -237,8 +238,6 @@ describe('UsersService', () => {
   describe('update', () => {
     it('should update user', async () => {
       const updateUser = { personalFirstName: 'Eric', password: 'newPassword' }
-      const tokenPayload = { sub: mockId } as TokenPayloadDto
-
       const result = await usersService.update(mockId, updateUser, tokenPayload);
 
       expect(result).toEqual(
@@ -257,7 +256,6 @@ describe('UsersService', () => {
 
     it('should not found user', async () => {
       const updateUser = { personalFirstName: 'Eric' }
-      const tokenPayload = { sub: mockId } as TokenPayloadDto
 
       jest.spyOn(usersRepository, 'preload').mockResolvedValue(undefined)
 
@@ -294,10 +292,10 @@ describe('UsersService', () => {
 
 
     it('should not remove with invalid token', async () => {
-      const tokenPayload = { sub: '1234' } as TokenPayloadDto
+      const currTokenPayload = { sub: '1234' } as TokenPayloadDto
 
-      await expect(usersService.remove(mockId, tokenPayload)).rejects.toThrow(ForbiddenException)
-      await expect(usersService.remove(mockId, tokenPayload)).rejects.toThrow('DONT_HAVE_PERMISSION')
+      await expect(usersService.remove(mockId, currTokenPayload)).rejects.toThrow(ForbiddenException)
+      await expect(usersService.remove(mockId, currTokenPayload)).rejects.toThrow('DONT_HAVE_PERMISSION')
     });
   });
 
