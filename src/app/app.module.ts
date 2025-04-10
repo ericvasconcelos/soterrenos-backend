@@ -11,6 +11,7 @@ import * as path from 'path';
 import { AuthModule } from 'src/auth/auth.module';
 import { GlobalConfigModule } from 'src/global-config/global-config.module';
 import globalConfig from 'src/global-config/global.config';
+import { MailModule } from 'src/mail/mail.module';
 import { LandsModule } from '../lands/lands.module';
 import { UsersModule } from '../users/users.module';
 
@@ -55,6 +56,7 @@ import { UsersModule } from '../users/users.module';
     UsersModule,
     LandsModule,
     AuthModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [
