@@ -8,6 +8,7 @@ import {
   ParseFilePipeBuilder,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors
@@ -16,8 +17,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 import { AuthTokenGuard } from 'src/auth/guards/auth-token.guard';
 import { TokenPayloadParam } from 'src/auth/params/token-payload.params';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserType } from './dto/user-type';
 import { UsersService } from './users.service';
 
 
@@ -25,13 +28,11 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
-  @UseGuards(AuthTokenGuard)
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAllByType(@Body() { type }: { type: UserType }, @Query() paginationDto: PaginationDto) {
+    return this.usersService.findAllByType(type, paginationDto);
   }
 
-  @UseGuards(AuthTokenGuard)
   @Get(':id')
   findOne(@Param('id') id: string, @TokenPayloadParam() tokenPayload: TokenPayloadDto) {
     return this.usersService.findOne(id, tokenPayload);

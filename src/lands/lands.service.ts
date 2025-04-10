@@ -62,11 +62,11 @@ export class LandsService {
   }
 
   async findAll(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
+    const { size = 10, page = 1 } = paginationDto;
 
     const lands = await this.landsRepository.find({
-      take: limit,
-      skip: offset,
+      take: size,
+      skip: page,
       order: {
         id: 'desc',
       },
