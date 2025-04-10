@@ -7,6 +7,7 @@ import * as magicBytes from 'magic-bytes.js';
 import * as path from 'path';
 import { TokenPayloadDto } from "src/auth/dto/token-payload.dto";
 import { HashingService } from "src/auth/hashing/hashing.service";
+import { MailService } from "src/mail/mail.service";
 import { Repository } from "typeorm";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UserResponseDto } from "./dto/user-response.dto";
@@ -51,7 +52,7 @@ describe('UsersService', () => {
               createdAt: mockDate,
               updatedAt: mockDate,
             })),
-            find: jest.fn().mockImplementation(() => Promise.resolve([
+            findAndCount: jest.fn().mockImplementation(() => Promise.resolve([[
               {
                 ...initialUserOne,
                 id: mockId,
@@ -64,7 +65,7 @@ describe('UsersService', () => {
                 createdAt: mockDate,
                 updatedAt: mockDate,
               }
-            ])),
+            ], 2])),
             preload: jest.fn().mockImplementation((updateUser) => Promise.resolve({
               ...initialUserOne,
               ...updateUser,
@@ -78,6 +79,12 @@ describe('UsersService', () => {
           provide: HashingService,
           useValue: {
             hash: jest.fn().mockResolvedValue(PASSWORD_HASH),
+          }
+        },
+        {
+          provide: MailService,
+          useValue: {
+            sendActivationEmail: jest.fn()
           }
         }
       ]
@@ -207,10 +214,10 @@ describe('UsersService', () => {
     });
   });
 
-  describe('findAll', () => {
+  describe('findAllByType', () => {
     it('should return all users', async () => {
-      const result = await usersService.findAll();
-      expect(result).toEqual([
+      const result = await usersService.findAllByType("owner");
+      expect(result.data).toEqual([
         expect.objectContaining({
           ...initialUserOne,
           id: mockId,
@@ -229,9 +236,9 @@ describe('UsersService', () => {
     });
 
     it('should return empty array', async () => {
-      jest.spyOn(usersRepository, 'find').mockResolvedValue([])
-      const result = await usersService.findAll();
-      expect(result.length).toEqual(0);
+      jest.spyOn(usersRepository, 'findAndCount').mockResolvedValue([[], 0])
+      const result = await usersService.findAllByType("owner");
+      expect(result.data.length).toEqual(0);
     });
   });
 

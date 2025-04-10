@@ -9,7 +9,7 @@ describe('UsersController', () => {
   let controller: UsersController;
   const usersServiceMock = {
     create: jest.fn(),
-    findAll: jest.fn(),
+    findAllByType: jest.fn(),
     findOne: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
@@ -33,10 +33,19 @@ describe('UsersController', () => {
     expect(result).toEqual(expected);
   });
 
-  it('findAll', async () => {
-    const expected = [{ ...createUser, id: '1' }];
-    jest.spyOn(usersServiceMock, 'findAll').mockResolvedValue(expected);
-    const result = await controller.findAll();
+
+
+  it('findAllByType', async () => {
+    const expected = {
+      data: [{ ...createUser, id: '1' }],
+      count: 1,
+      currentPage: 1,
+      lastPage: 1,
+      nextPage: null,
+      prevPage: null,
+    };
+    jest.spyOn(usersServiceMock, 'findAllByType').mockResolvedValue(expected);
+    const result = await controller.findAllByType({ type: "owner" });
     expect(usersServiceMock.create).toHaveBeenCalled();
     expect(result).toEqual(expected);
   });
