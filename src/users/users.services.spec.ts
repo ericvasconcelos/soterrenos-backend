@@ -7,6 +7,7 @@ import * as magicBytes from 'magic-bytes.js';
 import * as path from 'path';
 import { TokenPayloadDto } from "src/auth/dto/token-payload.dto";
 import { HashingService } from "src/auth/hashing/hashing.service";
+import { MailService } from "src/mail/mail.service";
 import { Repository } from "typeorm";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UserResponseDto } from "./dto/user-response.dto";
@@ -78,6 +79,12 @@ describe('UsersService', () => {
           provide: HashingService,
           useValue: {
             hash: jest.fn().mockResolvedValue(PASSWORD_HASH),
+          }
+        },
+        {
+          provide: MailService,
+          useValue: {
+            sendActivationEmail: jest.fn()
           }
         }
       ]
