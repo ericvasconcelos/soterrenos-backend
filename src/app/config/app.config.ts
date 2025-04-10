@@ -2,7 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 
 export default (app: INestApplication) => {
-  app.enableCors({ origin: process.env.ORIGIN });
+  app.enableCors({ origin: process.env.FRONTEND_URL });
 
   if (process.env.NODE_ENV === 'production') {
     app.use(helmet());

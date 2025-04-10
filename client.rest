@@ -48,7 +48,7 @@ Content-Type: application/json
 
 {
   "type": "owner",
-  "email": "deleted@gmail.com",
+  "email": "ericvascon@gmail.com",
   "password": "Printi@123",
   "phoneNumber": "(61) 99239-1847",
   "whatsappNumber": "(61) 99239-1847",
