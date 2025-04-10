@@ -12,10 +12,12 @@ import { filetypeextension } from 'magic-bytes.js';
 import * as path from 'path';
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 import { HashingService } from 'src/auth/hashing/hashing.service';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { MailService } from 'src/mail/mail.service';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserType } from './dto/user-type';
 import { User } from './entities/user.entity';
 
 @Injectable()
@@ -31,9 +33,27 @@ export class UsersService {
     throw new NotFoundException('USER_NOT_FOUND');
   }
 
-  async findAll() {
-    const users = await this.usersRepository.find();
-    return users;
+  async findAllByType(type: UserType, paginationDto?: PaginationDto) {
+    const page = paginationDto?.page ?? 1;
+    const size = paginationDto?.size ?? 10;
+
+    const [result, total] = await this.usersRepository.findAndCount({
+      where: {
+        type: type,
+      },
+      take: size,
+      skip: page,
+    });
+    const lastPage = Math.ceil(total / size);
+
+    return {
+      data: result,
+      count: total,
+      currentPage: page,
+      lastPage,
+      nextPage: page + 1 > lastPage ? null : page + 1,
+      prevPage: page - 1 < 1 ? null : page - 1,
+    };
   }
 
   async findOne(id: string, tokenPayload: TokenPayloadDto) {
