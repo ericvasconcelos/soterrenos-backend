@@ -1,0 +1,236 @@
+### Variables 
+@baseUrl = http://localhost:3000
+@authToken = {{authenticate.response.body.accessToken}}
+@refreshToken = {{authenticate.response.body.refreshToken}}
+
+
+####################################################
+### AUTHENTICATION
+####################################################
+
+### auth
+# @name authenticate
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "teste@gmail.com",
+  "password": "Teste@123"
+}
+
+# Refresh
+### Re-Autenticação
+# @name reAuthenticate
+POST {{baseUrl}}/auth/refresh/
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+
+####################################################
+### USERS
+####################################################
+
+# @name UsersController
+### findAll
+GET {{baseUrl}}/users?page=1&size=5
+Content-Type: application/json
+
+{
+  "type": "owner"
+}
+
+### findOne
+GET {{baseUrl}}/users/8d700d9a-030a-4122-9641-4f0f10fba7fb
+
+### create - owner
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "type": "owner",
+  "email": "owner@gmail.com",
+  "password": "Owner@123",
+  "phoneNumber": "(61) 99239-1847",
+  "whatsappNumber": "(61) 99239-1847",
+  "personalFirstName": "Delete",
+  "personalLastName": "User",
+  "personalId": "132.321.827-04"
+}
+
+### create - agency
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "type": "salesperson",
+  "email": "salesperson@gmail.com",
+  "password": "Sales@123",
+  "phoneNumber": "(61) 99239-1847",
+  "whatsappNumber": "(61) 99239-1847",
+  "personalFirstName": "Sales",
+  "personalLastName": "Person",
+  "personalId": "132.321.827-04",
+  "creci": "5125612",
+  "creciState": "DF"
+}
+
+
+### create - agency
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "type": "agency",
+  "email": "company2@gmail.com",
+  "password": "Agency@123",
+  "phoneNumber": "(61) 99239-1847",
+  "whatsappNumber": "(61) 99239-1847",
+  "tradeName": "Company Show 2",
+  "legalName": "Company Show 2 LTDA",
+  "companyId": "86.510.327/0001-29"
+}
+
+### update
+PATCH {{baseUrl}}/users/f4422ca1-9b3f-46dd-93db-41abd6aced69
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "isConfirmed": false,
+  "personalFirstName": "Teste refresh"
+}
+
+### delete
+DELETE {{baseUrl}}/users/79b9828e-cb5a-43e1-8660-dda889675c10
+Authorization: Bearer {{authToken}}
+
+####################################################
+### LANDS
+####################################################
+
+# @name LandsController
+### findAll
+GET {{baseUrl}}/lands?page=0&size=10
+
+### findOne
+GET {{baseUrl}}/lands/ee5a294a-8a55-40fc-9b1f-75c6c76d8237
+
+### create
+POST {{baseUrl}}/lands
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "title": "Terreno na ponte alta com valor baixo",
+  "active": true,
+  "images": [
+    {     
+      "src": "http://www.anuncios/images/4355127664.jpg",
+      "width": 500,
+      "height": 559
+    }
+  ],
+  "address": {
+    "zipCode": "71936250",
+    "street": "Avenida das Araucárias",
+    "number": "4400",
+    "complement": "Bloco C",
+    "neighborhood": "Águas Claras",
+    "city": "Brasília",
+    "state": "DF",
+    "condominium": ""
+  },
+  "landSize": {
+    "front": 10,
+    "left": 12.5,
+    "right": 12,
+    "back": 9
+  },
+  "price": 100000.00,
+  "condominiumTax": 150.00,
+  "propertyTax": 200.00,
+  "financingAvailable": true,
+  "fgts": false,
+  "description": "Executive House Imobiliária vende: lote de 2.500m², com área verde de 2.500m2;\n- Lote de fundo com casa de caseiro;\n- Plano;\n- Com área Verde de 2.500m2;\n- Condomínio com pavimentação;\n- Árvores frutíferas;\n- Escriturado.\nLigue a qualquer momento e agende uma visita com um de nossos corretores.",
+  "hasWater": true,
+  "hasArtesianWell": true,
+  "hasSewageSystem": true,
+  "hasEletricity": true,
+  "hasGas": true,
+  "hasInternet": true,
+  "isFenced": true,
+  "isLandLeveled": true,
+  "isLotClear": true,
+  "soil": "clay", 
+  "slope": "downhill", 
+  "zoning": "residential", 
+  "sunPosition": "east-facing", 
+  "established": true,
+  "paved": true,
+  "streetLighting": true,
+  "sanitationBasic": true,
+  "sidewalks": true,
+  "gatedEntrance": true,
+  "security": true,
+  "commonAreas": [ "sports_court", "party_hall", "gym", "swimming_pool", "sauna", "playground" ], 
+  "publicTransportation": ["train", "subway", "bus"],
+  "restaurant": true,
+  "school": true,
+  "hospital": true,
+  "supermarket": true,
+  "drugstore": true,
+  "gasStation": true,
+  "bank": true
+}
+
+### update
+PATCH {{baseUrl}}/lands/b043f8a1-8c71-43b3-b0db-31fefdbbbf4b
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "title": "Terreno 300m2 na casa joana",
+  "soil": "sandy"
+}
+
+### delete
+DELETE {{baseUrl}}/lands/30559fa5-fcd6-467a-82aa-29d95129a223
+Authorization: Bearer {{authToken}}
+
+
+# Upload
+### uploadPicture
+POST {{baseUrl}}/users/upload-picture/
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data; boundary=----BoundaryDelimitadorHttp
+
+------BoundaryDelimitadorHttp
+Content-Disposition: form-data; name="file"; filename="cat.png"
+Content-Type: image/png
+
+< ./dev/images/cat.png
+------BoundaryDelimitadorHttp--
+
+
+### uploadFiles
+POST {{baseUrl}}/lands/upload-files/
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data; boundary=----BoundaryDelimitadorHttp
+
+------BoundaryDelimitadorHttp
+Content-Disposition: form-data; name="file"; filename="man.png"
+Content-Type: image/png
+
+< ./dev/images/man.png
+------BoundaryDelimitadorHttp
+Content-Disposition: form-data; name="file"; filename="cat.png"
+Content-Type: image/png
+
+< ./dev/images/cat.png
+------BoundaryDelimitadorHttp--
+
+### Get Pictures
+GET {{baseUrl}}/pictures/7c25de3c-281e-4ad6-8f90-8cf2ba642d34.png
