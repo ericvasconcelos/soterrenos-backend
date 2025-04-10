@@ -52,7 +52,7 @@ describe('UsersService', () => {
               createdAt: mockDate,
               updatedAt: mockDate,
             })),
-            find: jest.fn().mockImplementation(() => Promise.resolve([
+            findAndCount: jest.fn().mockImplementation(() => Promise.resolve([[
               {
                 ...initialUserOne,
                 id: mockId,
@@ -65,7 +65,7 @@ describe('UsersService', () => {
                 createdAt: mockDate,
                 updatedAt: mockDate,
               }
-            ])),
+            ], 2])),
             preload: jest.fn().mockImplementation((updateUser) => Promise.resolve({
               ...initialUserOne,
               ...updateUser,
@@ -214,10 +214,10 @@ describe('UsersService', () => {
     });
   });
 
-  describe('findAll', () => {
+  describe('findAllByType', () => {
     it('should return all users', async () => {
-      const result = await usersService.findAll();
-      expect(result).toEqual([
+      const result = await usersService.findAllByType("owner");
+      expect(result.data).toEqual([
         expect.objectContaining({
           ...initialUserOne,
           id: mockId,
@@ -236,9 +236,9 @@ describe('UsersService', () => {
     });
 
     it('should return empty array', async () => {
-      jest.spyOn(usersRepository, 'find').mockResolvedValue([])
-      const result = await usersService.findAll();
-      expect(result.length).toEqual(0);
+      jest.spyOn(usersRepository, 'findAndCount').mockResolvedValue([[], 0])
+      const result = await usersService.findAllByType("owner");
+      expect(result.data.length).toEqual(0);
     });
   });
 
