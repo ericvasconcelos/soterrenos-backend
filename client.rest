@@ -51,7 +51,7 @@ Content-Type: application/json
 
 {
   "type": "owner",
-  "email": "deleted@gmail.com",
+  "email": "owner@gmail.com",
   "password": "Teste@123",
   "phoneNumber": "(61) 99239-1847",
   "whatsappNumber": "(61) 99239-1847",

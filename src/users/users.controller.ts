@@ -29,7 +29,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
   @Get()
-  findAllByType(@Body() { type }: { type: UserType }, @Query() paginationDto: PaginationDto) {
+  findAllByType(@Body() { type }: { type: UserType }, @Query() paginationDto?: PaginationDto) {
     return this.usersService.findAllByType(type, paginationDto);
   }
 

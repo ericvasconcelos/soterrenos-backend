@@ -6,12 +6,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { randomUUID } from 'crypto';
 import * as fs from 'fs/promises';
 import { filetypeextension } from 'magic-bytes.js';
 import * as path from 'path';
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 import { HashingService } from 'src/auth/hashing/hashing.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { MailService } from 'src/mail/mail.service';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -23,15 +25,17 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
-    private readonly hashingService: HashingService
+    private readonly hashingService: HashingService,
+    private readonly mailService: MailService,
   ) { }
 
   private throwNotFoundError() {
     throw new NotFoundException('USER_NOT_FOUND');
   }
 
-  async findAllByType(type: UserType, paginationDto: PaginationDto) {
-    const { size = 10, page = 1 } = paginationDto;
+  async findAllByType(type: UserType, paginationDto?: PaginationDto) {
+    const page = paginationDto?.page ?? 1;
+    const size = paginationDto?.size ?? 10;
 
     const [result, total] = await this.usersRepository.findAndCount({
       where: {
@@ -72,6 +76,12 @@ export class UsersService {
 
       const newUser = this.usersRepository.create(userData);
       await this.usersRepository.save(newUser);
+
+      await this.mailService.sendActivationEmail({
+        email: newUser.email,
+        name: newUser?.personalFirstName ?? newUser?.tradeName ?? '',
+        token: randomUUID()
+      })
       return newUser;
     } catch (error) {
       if (error?.code === '23505') {
