@@ -15,7 +15,7 @@ Content-Type: application/json
 
 {
   "email": "teste@gmail.com",
-  "password": "Printi@123"
+  "password": "teste@123"
 }
 
 # Refresh
@@ -35,26 +35,62 @@ Content-Type: application/json
 
 # @name UsersController
 ### findAll
-GET {{baseUrl}}/users
-Authorization: Bearer {{authToken}}
+GET {{baseUrl}}/users?page=1&size=5
+Content-Type: application/json
+
+{
+  "type": "owner"
+}
 
 ### findOne
 GET {{baseUrl}}/users/8d700d9a-030a-4122-9641-4f0f10fba7fb
-Authorization: Bearer {{authToken}}
 
-### create
+### create - owner
 POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
   "type": "owner",
   "email": "deleted@gmail.com",
-  "password": "Printi@123",
+  "password": "Teste@123",
   "phoneNumber": "(61) 99239-1847",
   "whatsappNumber": "(61) 99239-1847",
   "personalFirstName": "Delete",
   "personalLastName": "User",
   "personalId": "132.321.827-04"
+}
+
+### create - agency
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "type": "salesperson",
+  "email": "salesperson@gmail.com",
+  "password": "Sales@123",
+  "phoneNumber": "(61) 99239-1847",
+  "whatsappNumber": "(61) 99239-1847",
+  "personalFirstName": "Sales",
+  "personalLastName": "Person",
+  "personalId": "132.321.827-04",
+  "creci": "5125612",
+  "creciState": "DF"
+}
+
+
+### create - agency
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "type": "agency",
+  "email": "company2@gmail.com",
+  "password": "Teste@123",
+  "phoneNumber": "(61) 99239-1847",
+  "whatsappNumber": "(61) 99239-1847",
+  "tradeName": "Company Show 2",
+  "legalName": "Company Show 2 LTDA",
+  "companyId": "86.510.327/0001-29"
 }
 
 ### update
@@ -77,7 +113,7 @@ Authorization: Bearer {{authToken}}
 
 # @name LandsController
 ### findAll
-GET {{baseUrl}}/lands?offset=0&limit=10
+GET {{baseUrl}}/lands?page=0&size=10
 
 ### findOne
 GET {{baseUrl}}/lands/ee5a294a-8a55-40fc-9b1f-75c6c76d8237
