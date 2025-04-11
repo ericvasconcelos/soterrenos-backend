@@ -17,8 +17,8 @@ import { Land } from 'src/lands/entities/land.entity';
 import { MailService } from 'src/mail/mail.service';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UserTypeEnum } from './dto/types';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserType } from './dto/user-type';
 import { User } from './entities/user.entity';
 
 @Injectable()
@@ -32,11 +32,7 @@ export class UsersService {
     private readonly mailService: MailService,
   ) { }
 
-  private throwNotFoundError() {
-    throw new NotFoundException('USER_NOT_FOUND');
-  }
-
-  async findAllByType(type: UserType, paginationDto?: PaginationDto) {
+  async findAllByType(type: UserTypeEnum, paginationDto?: PaginationDto) {
     const page = paginationDto?.page ?? 1;
     const size = paginationDto?.size ?? 10;
     const offset = (page - 1) * size;
@@ -83,14 +79,13 @@ export class UsersService {
 
   async findMe({ sub }: TokenPayloadDto) {
     const user = await this.usersRepository.findOneBy({ id: sub });
-    if (!user) return this.throwNotFoundError();
-    // if (user?.id !== tokenPayload?.sub) throw new ForbiddenException('DONT_HAVE_PERMISSION')
+    if (!user) throw new NotFoundException('USER_NOT_FOUND');
     return user;
   }
 
   async findOne(id: string, tokenPayload: TokenPayloadDto) {
     const user = await this.usersRepository.findOneBy({ id });
-    if (!user) return this.throwNotFoundError();
+    if (!user) throw new NotFoundException('USER_NOT_FOUND');
     if (user?.id !== tokenPayload?.sub) throw new ForbiddenException('DONT_HAVE_PERMISSION')
     return user;
   }
@@ -141,7 +136,7 @@ export class UsersService {
       ...useData
     });
 
-    if (!user) return this.throwNotFoundError();
+    if (!user) throw new NotFoundException('USER_NOT_FOUND');
     if (user.id !== tokenPayload?.sub) throw new ForbiddenException('DONT_HAVE_PERMISSION')
 
     await this.usersRepository.save(user);
@@ -150,7 +145,7 @@ export class UsersService {
 
   async remove(id: string, tokenPayload: TokenPayloadDto) {
     const user = await this.usersRepository.findOneBy({ id });
-    if (!user) return this.throwNotFoundError();
+    if (!user) throw new NotFoundException('USER_NOT_FOUND');
     if (id !== tokenPayload?.sub) throw new ForbiddenException('DONT_HAVE_PERMISSION')
     await this.usersRepository.remove(user);
     return {

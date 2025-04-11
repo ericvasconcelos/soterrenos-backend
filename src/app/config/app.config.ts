@@ -1,4 +1,5 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 
 export default (app: INestApplication) => {
@@ -15,6 +16,16 @@ export default (app: INestApplication) => {
       transform: false,
     }),
   );
+
+  const config = new DocumentBuilder()
+    .setTitle('API Documentation')
+    .setDescription('API for Só Terrenos Startup')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, documentFactory);
 
   return app;
 };
