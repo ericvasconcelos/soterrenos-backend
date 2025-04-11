@@ -64,6 +64,15 @@ export class Land {
     nullable: true,
     transformer: numericTransformer,
   })
+  area?: number;
+
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    transformer: numericTransformer,
+  })
   price: number;
 
   @Column({

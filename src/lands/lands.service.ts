@@ -4,10 +4,12 @@ import { randomUUID } from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
+import { LandSizeDto } from 'src/common/dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateLandDto } from './dto/create-land.dto';
+import { QueryLandDto } from './dto/query-land.dto';
 import { UpdateLandDto } from './dto/update-land.dto';
 import { Land } from './entities/land.entity';
 
@@ -19,10 +21,6 @@ export class LandsService {
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
   ) { }
-
-  throwNotFoundError() {
-    throw new NotFoundException('LAND_NOT_FOUND');
-  }
 
   private createSlug(title: string): string {
     let slug = title
@@ -36,6 +34,14 @@ export class LandsService {
       .replace(/-+/g, '-');
 
     return slug.substring(0, 100);
+  }
+
+  private getTotalArea(landSize: LandSizeDto): number {
+    const { front, left, right, back } = landSize
+    const averageFrontBack = (front + back) / 2;
+    const averageLeftRight = (left + right) / 2;
+    const totalArea = averageFrontBack * averageLeftRight;
+    return totalArea
   }
 
   private async generateUniqueSlug(
@@ -102,7 +108,7 @@ export class LandsService {
       },
     });
 
-    if (!land) this.throwNotFoundError();
+    if (!land) throw new NotFoundException('LAND_NOT_FOUND');
     return land;
   }
 
@@ -114,6 +120,7 @@ export class LandsService {
 
     const land = this.landsRepository.create({
       ...createLandDto,
+      area: this.getTotalArea(createLandDto.landSize),
       slug,
       user,
       createdAt: new Date(),
@@ -124,7 +131,7 @@ export class LandsService {
 
     return {
       ...land,
-      user: land.user.id,
+      user: { id: land.user.id },
     };
   }
 
@@ -132,7 +139,7 @@ export class LandsService {
     const land = await this.findOne(id);
     const user = await this.usersRepository.findOneBy({ id: tokenPayload?.sub })
 
-    if (!land) return this.throwNotFoundError();
+    if (!land) throw new NotFoundException('LAND_NOT_FOUND');
     if (!user) throw new NotFoundException('USER_NOT_FOUND');
     if (user?.id !== land?.user?.id) throw new ForbiddenException('DONT_HAVE_PERMISSION');
 
@@ -140,7 +147,11 @@ export class LandsService {
       land.slug = await this.generateUniqueSlug(updateLandDto.title, id);
     }
 
-    const newLand: Partial<Land> = {
+    if (updateLandDto?.landSize) {
+      land.area = this.getTotalArea(updateLandDto.landSize);
+    }
+
+    const newLand = {
       ...land,
       ...updateLandDto,
       updatedAt: new Date(),
@@ -152,9 +163,9 @@ export class LandsService {
 
   async remove(id: string, tokenPayload: TokenPayloadDto) {
     const land = await this.findOne(id);
-    const user = await this.usersRepository.findOneBy({ id: tokenPayload?.sub })
+    if (!land) throw new NotFoundException('LAND_NOT_FOUND');
 
-    if (!land) return this.throwNotFoundError();
+    const user = await this.usersRepository.findOneBy({ id: tokenPayload?.sub })
     if (!user) throw new NotFoundException('USER_NOT_FOUND');
     if (user?.id !== land?.user?.id) throw new ForbiddenException('DONT_HAVE_PERMISSION');
 
@@ -169,7 +180,7 @@ export class LandsService {
     try {
       const uploadPromises = files.map(async (file) => {
         const fileExtension = path
-          .extname(file.originalname as string)
+          .extname(file.originalname)
           .toLowerCase()
           .substring(1);
 
@@ -177,7 +188,7 @@ export class LandsService {
         const fileFullPath = path.resolve(process.cwd(), 'pictures', fileName);
 
         // Escreve o arquivo e retorna o caminho completo
-        await fs.writeFile(fileFullPath, file.buffer as Buffer);
+        await fs.writeFile(fileFullPath, file.buffer);
         return { src: `/pictures/${fileName}` }
       });
 
@@ -187,5 +198,108 @@ export class LandsService {
       console.log(error.message)
       throw new InternalServerErrorException('UPLOAD_FILES_FAILED');
     }
+  }
+
+  async findLandsByUser(id: string, paginationDto?: PaginationDto) {
+    const page = paginationDto?.page ?? 1;
+    const size = paginationDto?.size ?? 10;
+    const offset = (page - 1) * size;
+
+    const lands = await this.landsRepository.find({
+      where: {
+        user: { id }
+      },
+      take: size,
+      skip: offset,
+      order: {
+        id: 'desc',
+      },
+      relations: ['user'],
+      select: {
+        user: {
+          id: true,
+          personalFirstName: true,
+          personalLastName: true,
+          tradeName: true,
+        },
+      },
+    });
+
+    return lands;
+  }
+
+  async searchLands(state: string, city: string, neighborhood: string, queryLandDto?: QueryLandDto) {
+    const page = queryLandDto?.page ?? 1;
+    const size = queryLandDto?.size ?? 10;
+    const offset = (page - 1) * size;
+
+    // Construir query dinâmica
+    const queryBuilder = this.landsRepository.createQueryBuilder('land')
+      .where("land.address->>'state' = :state", { state }) // Acessa o campo state do JSONB
+      .andWhere("land.address->>'city' = :city", { city })
+      .andWhere("land.address->>'neighborhood' = :neighborhood", { neighborhood });
+
+    // Aplicar filtros numéricos
+    if (queryLandDto?.minPrice || queryLandDto?.maxPrice) {
+      queryBuilder.andWhere('land.price BETWEEN COALESCE(:minPrice, land.price) AND COALESCE(:maxPrice, land.price)', {
+        minPrice: queryLandDto?.minPrice,
+        maxPrice: queryLandDto?.maxPrice
+      });
+    }
+
+    if (queryLandDto?.minArea || queryLandDto?.maxArea) {
+      queryBuilder.andWhere('land.area BETWEEN COALESCE(:minArea, land.area) AND COALESCE(:maxArea, land.area)', {
+        minArea: queryLandDto?.minArea,
+        maxArea: queryLandDto?.maxArea
+      });
+    }
+
+    const booleanFilters = [
+      'fgts', 'financingAvailable', 'hasWater', 'hasArtesianWell',
+      'hasSewageSystem', 'hasEletricity', 'isFenced',
+      'isLandLeveled', 'isLotClear', 'established',
+      'paved', 'streetLighting', 'sanitationBasic',
+      'sidewalks', 'gatedEntrance', 'security'
+    ];
+
+    booleanFilters.forEach(filter => {
+      if (queryLandDto?.[filter]) {
+        queryBuilder.andWhere(`land.${filter} = :${filter}`, {
+          [filter]: queryLandDto?.[filter] === 'true'
+        });
+      }
+    });
+
+    const selectFilters = ['soilType', 'slope', 'zoning', 'sunPosition'] as const;
+    type SelectFilter = typeof selectFilters[number];
+    selectFilters.forEach((filter: SelectFilter) => {
+      if (queryLandDto?.[filter]) {
+        queryBuilder.andWhere(`land.${filter} = :${filter}`, {
+          [filter]: queryLandDto?.[filter]
+        });
+      }
+    });
+
+    if (queryLandDto?.commonAreas) {
+      const areas = queryLandDto?.commonAreas.split(',');
+      queryBuilder.andWhere('land.commonAreas @> :areas', { areas });
+    }
+
+    const [lands, total] = await queryBuilder
+      .skip(offset)
+      .take(size)
+      .orderBy('land.id', 'DESC')
+      .getManyAndCount();
+
+    const lastPage = Math.ceil(total / size);
+
+    return {
+      data: lands,
+      count: total,
+      currentPage: page,
+      lastPage,
+      nextPage: page + 1 > lastPage ? null : page + 1,
+      prevPage: page - 1 < 1 ? null : page - 1,
+    };
   }
 }

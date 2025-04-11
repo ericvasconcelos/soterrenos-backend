@@ -39,7 +39,6 @@ import { UsersModule } from '../users/users.module';
           password: globalConfigurations.database.password,
           autoLoadEntities: globalConfigurations.database.autoLoadEntities,
           synchronize: globalConfigurations.database.synchronize,
-          // dropSchema: globalConfigurations.database.dropSchema,
           // entities: [__dirname + '/**/*.entity{.ts,.js}'],
           // migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
           // cli: {

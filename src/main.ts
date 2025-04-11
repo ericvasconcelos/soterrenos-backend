@@ -1,5 +1,6 @@
 import { ClassSerializerInterceptor, INestApplication } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
+
 import { AppModule } from './app/app.module';
 import appConfig from './app/config/app.config';
 
