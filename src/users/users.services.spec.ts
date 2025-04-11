@@ -7,6 +7,7 @@ import * as magicBytes from 'magic-bytes.js';
 import * as path from 'path';
 import { TokenPayloadDto } from "src/auth/dto/token-payload.dto";
 import { HashingService } from "src/auth/hashing/hashing.service";
+import { Land } from "src/lands/entities/land.entity";
 import { MailService } from "src/mail/mail.service";
 import { Repository } from "typeorm";
 import { CreateUserDto } from "./dto/create-user.dto";
@@ -73,6 +74,19 @@ describe('UsersService', () => {
               updatedAt: mockUpdateDate,
             })),
             remove: jest.fn()
+          },
+        },
+        {
+          provide: getRepositoryToken(Land),
+          useValue: {
+            createQueryBuilder: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnThis(),
+              addSelect: jest.fn().mockReturnThis(),
+              where: jest.fn().mockReturnThis(),
+              andWhere: jest.fn().mockReturnThis(),
+              groupBy: jest.fn().mockReturnThis(),
+              getRawMany: jest.fn().mockResolvedValue([{ userId: mockId, count: '1' }]),
+            }),
           }
         },
         {
@@ -223,14 +237,16 @@ describe('UsersService', () => {
           id: mockId,
           createdAt: mockDate,
           updatedAt: mockDate,
-          profileImage: undefined
+          profileImage: undefined,
+          activeLandsCount: 1
         }),
         expect.objectContaining({
           ...initialUserTwo,
           id: mockId2,
           createdAt: mockDate,
           updatedAt: mockDate,
-          profileImage: undefined
+          profileImage: undefined,
+          activeLandsCount: 0
         })
       ]);
     });

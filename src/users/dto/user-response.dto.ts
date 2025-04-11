@@ -52,4 +52,7 @@ export class UserResponseDto {
 
   @Expose()
   creciState?: string;
+
+  @Expose()
+  activeLandsCount?: number;
 }
