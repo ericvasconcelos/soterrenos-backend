@@ -14,8 +14,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "teste@gmail.com",
-  "password": "Teste@123"
+  "email": "owner@gmail.com",
+  "password": "Owner@123"
 }
 
 # Refresh
@@ -28,22 +28,27 @@ Content-Type: application/json
   "refreshToken": "{{refreshToken}}"
 }
 
-
 ####################################################
 ### USERS
 ####################################################
 
 # @name UsersController
 ### findAll
-GET {{baseUrl}}/users?page=1&size=5
+GET {{baseUrl}}/users?page=1&size=10
 Content-Type: application/json
 
 {
   "type": "owner"
 }
 
+### findMe
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{authToken}}
+
+
 ### findOne
-GET {{baseUrl}}/users/8d700d9a-030a-4122-9641-4f0f10fba7fb
+GET {{baseUrl}}/users/a35778ca-c931-42bc-aa19-371ed1f566a4
+Authorization: Bearer {{authToken}}
 
 ### create - owner
 POST {{baseUrl}}/users
@@ -113,7 +118,7 @@ Authorization: Bearer {{authToken}}
 
 # @name LandsController
 ### findAll
-GET {{baseUrl}}/lands?page=0&size=10
+GET {{baseUrl}}/lands?page=1&size=10
 
 ### findOne
 GET {{baseUrl}}/lands/ee5a294a-8a55-40fc-9b1f-75c6c76d8237
@@ -124,7 +129,7 @@ Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-  "title": "Terreno na ponte alta com valor baixo",
+  "title": "Terreno na ponte alta 5",
   "active": true,
   "images": [
     {     
