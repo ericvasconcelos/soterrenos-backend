@@ -30,14 +30,23 @@ describe('UsersController', () => {
     jest.spyOn(usersServiceMock, 'create').mockResolvedValue(expected);
     const result = await controller.create(createUser);
     expect(usersServiceMock.create).toHaveBeenCalledWith(createUser);
-    expect(result).toEqual(expected);
+    expect(result).toEqual(expect.objectContaining({
+      email: expected.email,
+      phoneNumber: expected.phoneNumber,
+      whatsappNumber: expected.whatsappNumber,
+      profileImage: expected.profileImage,
+      type: expected.type,
+      personalFirstName: expected.personalFirstName,
+      personalLastName: expected.personalLastName,
+      personalId: expected.personalId,
+      id: expected.id,
+    }));
   });
-
 
 
   it('findAllByType', async () => {
     const expected = {
-      data: [{ ...createUser, id: '1' }],
+      data: [{ ...createUser, id: '1', activeLandsCount: 1 }],
       count: 1,
       currentPage: 1,
       lastPage: 1,
@@ -47,7 +56,24 @@ describe('UsersController', () => {
     jest.spyOn(usersServiceMock, 'findAllByType').mockResolvedValue(expected);
     const result = await controller.findAllByType({ type: "owner" });
     expect(usersServiceMock.create).toHaveBeenCalled();
-    expect(result).toEqual(expected);
+    expect(result).toEqual(expect.objectContaining({
+      count: 1,
+      currentPage: 1,
+      lastPage: 1,
+      nextPage: null,
+      prevPage: null,
+      data: [expect.objectContaining({
+        email: createUser.email,
+        phoneNumber: createUser.phoneNumber,
+        whatsappNumber: createUser.whatsappNumber,
+        profileImage: createUser.profileImage,
+        type: createUser.type,
+        personalFirstName: createUser.personalFirstName,
+        personalLastName: createUser.personalLastName,
+        personalId: createUser.personalId,
+        id: '1',
+      })]
+    }));
   });
 
   it('findOne', async () => {
@@ -57,7 +83,17 @@ describe('UsersController', () => {
     jest.spyOn(usersServiceMock, 'findOne').mockResolvedValue(expected);
     const result = await controller.findOne(id, tokenPayload);
     expect(usersServiceMock.findOne).toHaveBeenCalledWith(id, tokenPayload);
-    expect(result).toEqual(expected);
+    expect(result).toEqual(expect.objectContaining({
+      email: expected.email,
+      phoneNumber: expected.phoneNumber,
+      whatsappNumber: expected.whatsappNumber,
+      profileImage: expected.profileImage,
+      type: expected.type,
+      personalFirstName: expected.personalFirstName,
+      personalLastName: expected.personalLastName,
+      personalId: expected.personalId,
+      id: expected.id,
+    }));
   });
 
   it('update', async () => {

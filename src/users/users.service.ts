@@ -13,6 +13,7 @@ import * as path from 'path';
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 import { HashingService } from 'src/auth/hashing/hashing.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Land } from 'src/lands/entities/land.entity';
 import { MailService } from 'src/mail/mail.service';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -25,6 +26,8 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    @InjectRepository(Land)
+    private readonly landsRepository: Repository<Land>,
     private readonly hashingService: HashingService,
     private readonly mailService: MailService,
   ) { }
@@ -36,24 +39,53 @@ export class UsersService {
   async findAllByType(type: UserType, paginationDto?: PaginationDto) {
     const page = paginationDto?.page ?? 1;
     const size = paginationDto?.size ?? 10;
+    const offset = (page - 1) * size;
 
-    const [result, total] = await this.usersRepository.findAndCount({
-      where: {
-        type: type,
-      },
+    const [users, total] = await this.usersRepository.findAndCount({
+      where: { type: type },
+      order: { createdAt: 'DESC' },
       take: size,
-      skip: page,
+      skip: offset,
     });
+
+    const userIds = users.map((user) => user.id);
+
+    const landsCounts = await this.landsRepository
+      .createQueryBuilder('land')
+      .select('land.userId', 'userId')
+      .addSelect('COUNT(land.id)', 'count')
+      .where('land.userId IN (:...userIds)', { userIds })
+      .andWhere('land.active = :active', { active: true })
+      .groupBy('land.userId')
+      .getRawMany();
+
+    const countsMap = new Map<string, number>(
+      landsCounts.map((lc) => [lc.userId, parseInt(lc.count as string, 10)]),
+    );
+
+    const data = users.map((user) => ({
+      ...user,
+      activeLandsCount: countsMap.get(user.id) || 0,
+    }));
+
+
     const lastPage = Math.ceil(total / size);
 
     return {
-      data: result,
+      data,
       count: total,
       currentPage: page,
       lastPage,
       nextPage: page + 1 > lastPage ? null : page + 1,
       prevPage: page - 1 < 1 ? null : page - 1,
     };
+  }
+
+  async findMe({ sub }: TokenPayloadDto) {
+    const user = await this.usersRepository.findOneBy({ id: sub });
+    if (!user) return this.throwNotFoundError();
+    // if (user?.id !== tokenPayload?.sub) throw new ForbiddenException('DONT_HAVE_PERMISSION')
+    return user;
   }
 
   async findOne(id: string, tokenPayload: TokenPayloadDto) {
@@ -134,7 +166,7 @@ export class UsersService {
 
     if (file.size < 1024) throw new BadRequestException('FILE_SMALL')
 
-    const fileTypeExtension = filetypeextension(file.buffer as Buffer)[0];
+    const fileTypeExtension = filetypeextension(file.buffer)[0];
     if (!fileTypeExtension || !ALLOWED_MIME_TYPES.has(fileTypeExtension)) {
       throw new BadRequestException('INVALID_FILE_TYPE');
     }
@@ -142,7 +174,7 @@ export class UsersService {
     const fileName = `profile-${tokenPayload.sub}.${fileTypeExtension}`;
     const fileFullPath = path.resolve(process.cwd(), 'pictures', fileName);
 
-    await fs.writeFile(fileFullPath, file.buffer as Buffer);
+    await fs.writeFile(fileFullPath, file.buffer);
 
     return await this.update(
       tokenPayload.sub,

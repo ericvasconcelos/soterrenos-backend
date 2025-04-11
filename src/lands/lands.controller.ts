@@ -3,15 +3,13 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   Param,
   Patch,
   Post,
   Query,
   UploadedFiles,
   UseGuards,
-  UseInterceptors,
+  UseInterceptors
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
@@ -26,9 +24,8 @@ import { LandsService } from './lands.service';
 export class LandsController {
   constructor(private readonly landsService: LandsService) { }
 
-  @HttpCode(HttpStatus.OK)
   @Get()
-  async findAll(@Query() paginationDto: PaginationDto) {
+  async findAll(@Query() paginationDto?: PaginationDto) {
     const lands = await this.landsService.findAll(paginationDto);
     return lands;
   }
