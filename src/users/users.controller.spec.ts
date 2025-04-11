@@ -1,4 +1,5 @@
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
+import { UserTypeEnum } from './dto/types';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { UserFactory } from './factories/user.factory';
@@ -16,7 +17,7 @@ describe('UsersController', () => {
     uploadPicture: jest.fn(),
   } as unknown as UsersService;
 
-  const createUser = UserFactory.create('owner')
+  const createUser = UserFactory.create(UserTypeEnum.OWNER)
 
   beforeEach(() => {
     controller = new UsersController(usersServiceMock);
@@ -54,7 +55,7 @@ describe('UsersController', () => {
       prevPage: null,
     };
     jest.spyOn(usersServiceMock, 'findAllByType').mockResolvedValue(expected);
-    const result = await controller.findAllByType({ type: "owner" });
+    const result = await controller.findAllByType({ type: UserTypeEnum.OWNER });
     expect(usersServiceMock.create).toHaveBeenCalled();
     expect(result).toEqual(expect.objectContaining({
       count: 1,
@@ -107,10 +108,18 @@ describe('UsersController', () => {
     });
     const result = await controller.update(id, userDto, tokenPayload);
     expect(usersServiceMock.update).toHaveBeenCalledWith(id, userDto, tokenPayload);
-    expect(result).toEqual({
-      ...expected,
+    expect(result).toEqual(expect.objectContaining({
+      email: expected.email,
+      phoneNumber: expected.phoneNumber,
+      whatsappNumber: expected.whatsappNumber,
+      profileImage: expected.profileImage,
+      type: expected.type,
+      personalFirstName: expected.personalFirstName,
+      personalLastName: expected.personalLastName,
+      personalId: expected.personalId,
+      id: expected.id,
       ...userDto,
-    });
+    }));
   });
 
   it('remove', async () => {

@@ -143,7 +143,7 @@ Authorization: Bearer {{authToken}}
     "street": "Avenida das Araucárias",
     "number": "4400",
     "complement": "Bloco C",
-    "neighborhood": "Águas Claras",
+    "neighborhood": "Gama",
     "city": "Brasília",
     "state": "DF",
     "condominium": ""

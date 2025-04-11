@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { HttpStatus, INestApplication } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigType } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -11,6 +11,7 @@ import { GlobalConfigModule } from 'src/global-config/global-config.module';
 import globalConfig from 'src/global-config/global.config';
 import { LandsModule } from 'src/lands/lands.module';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { UserTypeEnum } from 'src/users/dto/types';
 import { UserFactory } from 'src/users/factories/user.factory';
 import { UsersModule } from 'src/users/users.module';
 import * as request from 'supertest';
@@ -30,30 +31,36 @@ const login = async (
 };
 
 const createUserAndLogin = async (app: INestApplication) => {
-  const user = UserFactory.create('owner');
+  const user = UserFactory.create(UserTypeEnum.OWNER);
   const newUser = await request(app.getHttpServer()).post('/users').send(user);
   return login(app, { ...user, id: newUser.body.id });
 };
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
-  const createUser = UserFactory.create('owner');
+  const createUser = UserFactory.create(UserTypeEnum.OWNER);
   const fakeUUID = '44f2636a-f756-4686-b37b-233b8accd128'
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forFeature(globalConfig),
-        TypeOrmModule.forRoot({
-          type: 'postgres',
-          host: 'localhost',
-          port: 5432,
-          username: 'postgres',
-          database: 'testing',
-          password: 'cyen4311',
-          autoLoadEntities: true,
-          synchronize: true,
-          dropSchema: true,
+        TypeOrmModule.forRootAsync({
+          imports: [ConfigModule.forFeature(globalConfig)],
+          inject: [globalConfig.KEY],
+          useFactory: (globalConfigurations: ConfigType<typeof globalConfig>) => {
+            return {
+              type: globalConfigurations.db_testing.type,
+              host: globalConfigurations.db_testing.host,
+              port: globalConfigurations.db_testing.port,
+              username: globalConfigurations.db_testing.username,
+              database: globalConfigurations.db_testing.database,
+              password: globalConfigurations.db_testing.password,
+              autoLoadEntities: globalConfigurations.db_testing.autoLoadEntities,
+              synchronize: globalConfigurations.db_testing.synchronize,
+              dropSchema: globalConfigurations.db_testing.dropSchema,
+            }
+          }
         }),
         ServeStaticModule.forRoot({
           rootPath: path.resolve(__dirname, '..', '..', 'pictures'),
@@ -93,8 +100,6 @@ describe('AppController (e2e)', () => {
         phoneNumber: createUser.phoneNumber,
         whatsappNumber: createUser.whatsappNumber,
         personalId: createUser.personalId,
-        password: expect.any(String),
-        isConfirmed: false,
         profileImage: null,
         creci: '',
         creciState: '',
@@ -161,17 +166,19 @@ describe('AppController (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .get('/users')
-        .set('Authorization', `Bearer ${createdUser.accessToken}`)
+        .send({ type: UserTypeEnum.OWNER })
         .expect(HttpStatus.OK);
 
       expect(response.body).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            personalId: createdUser.user.personalId,
-            personalFirstName: createdUser.user.personalFirstName,
-            personalLastName: createdUser.user.personalLastName,
-          }),
-        ]),
+        expect.objectContaining({
+          data: expect.arrayContaining([
+            expect.objectContaining({
+              personalId: createdUser.user.personalId,
+              personalFirstName: createdUser.user.personalFirstName,
+              personalLastName: createdUser.user.personalLastName,
+            }),
+          ]),
+        })
       );
     });
   });

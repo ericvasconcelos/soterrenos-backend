@@ -12,11 +12,17 @@ import {
   UseInterceptors
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 import { AuthTokenGuard } from 'src/auth/guards/auth-token.guard';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { DeleteResponseDto } from '../common/dto/delete-response.dto';
 import { TokenPayloadParam } from './../auth/params/token-payload.params';
 import { CreateLandDto } from './dto/create-land.dto';
+import { LandResponseDto } from './dto/land-response.dto';
+import { LandsResponseDto } from './dto/lands-response.dto';
+import { QueryLandDto } from './dto/query-land.dto';
 import { UpdateLandDto } from './dto/update-land.dto';
 import { LandsService } from './lands.service';
 
@@ -25,42 +31,78 @@ export class LandsController {
   constructor(private readonly landsService: LandsService) { }
 
   @Get()
-  async findAll(@Query() paginationDto?: PaginationDto) {
+  async findAll(@Query() paginationDto?: PaginationDto): Promise<LandResponseDto[]> {
     const lands = await this.landsService.findAll(paginationDto);
-    return lands;
+    return plainToInstance(LandResponseDto, lands)
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.landsService.findOne(id);
+  async findOne(@Param('id') id: string): Promise<LandResponseDto> {
+    const land = await this.landsService.findOne(id);
+    return plainToInstance(LandResponseDto, land)
   }
 
   @UseGuards(AuthTokenGuard)
+  @ApiBearerAuth()
   @Post()
-  create(@Body() createLandDto: CreateLandDto, @TokenPayloadParam() tokenPayload: TokenPayloadDto) {
-    return this.landsService.create(createLandDto, tokenPayload);
+  async create(@Body() createLandDto: CreateLandDto, @TokenPayloadParam() tokenPayload: TokenPayloadDto): Promise<LandResponseDto> {
+    const land = await this.landsService.create(createLandDto, tokenPayload);
+    return plainToInstance(LandResponseDto, land)
   }
 
   @UseGuards(AuthTokenGuard)
+  @ApiBearerAuth()
   @Patch(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateLandDto: UpdateLandDto,
     @TokenPayloadParam() tokenPayload: TokenPayloadDto
-  ) {
-    return this.landsService.update(id, updateLandDto, tokenPayload);
+  ): Promise<LandResponseDto> {
+    const land = await this.landsService.update(id, updateLandDto, tokenPayload);
+    return plainToInstance(LandResponseDto, land)
   }
 
   @UseGuards(AuthTokenGuard)
+  @ApiBearerAuth()
   @Delete(':id')
-  remove(@Param('id') id: string, @TokenPayloadParam() tokenPayload: TokenPayloadDto) {
+  remove(@Param('id') id: string, @TokenPayloadParam() tokenPayload: TokenPayloadDto): Promise<DeleteResponseDto> {
     return this.landsService.remove(id, tokenPayload);
   }
 
   @UseGuards(AuthTokenGuard)
+  @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
   @UseInterceptors(FilesInterceptor('file'))
   @Post('upload-files')
   async uploadFiles(@UploadedFiles() files: Array<Express.Multer.File>) {
     return this.landsService.uploadFiles(files)
+  }
+
+  @Get('user/:id')
+  async findLandsByUser(@Param('id') id: string, @Query() paginationDto?: PaginationDto): Promise<LandResponseDto[]> {
+    const land = await this.landsService.findLandsByUser(id, paginationDto);
+    return plainToInstance(LandResponseDto, land)
+  }
+
+  @Get(':state/:city/:neighborhood')
+  async searchLands(
+    @Param('state') state: string,
+    @Param('city') city: string,
+    @Param('neighborhood') neighborhood: string,
+    @Query() queryLandDto?: QueryLandDto
+  ) {
+    const lands = await this.landsService.searchLands(state, city, neighborhood, queryLandDto);
+    return plainToInstance(LandsResponseDto, lands)
   }
 }

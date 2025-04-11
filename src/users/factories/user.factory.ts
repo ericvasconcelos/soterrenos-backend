@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { CreateUserDto } from '../dto/create-user.dto';
-import { UserType } from '../dto/user-type';
+import { StateType, UserTypeEnum } from '../dto/types';
 
 export class UserFactory {
   private static generateCPF(formatted: boolean = true): string {
@@ -37,7 +37,7 @@ export class UserFactory {
       : cnpj;
   };
 
-  static create(type: UserType, hasProfilemage: boolean = false): CreateUserDto {
+  static create(type: UserTypeEnum, hasProfilemage: boolean = false): CreateUserDto {
     const baseUser = {
       email: faker.internet.email(),
       password: faker.internet.password({ length: 10, prefix: '#1A' }),
@@ -53,7 +53,7 @@ export class UserFactory {
     const companyName = faker.company.name();
 
     switch (type) {
-      case 'agency':
+      case UserTypeEnum.AGENCY:
         return {
           ...baseUser,
           type,
@@ -62,7 +62,7 @@ export class UserFactory {
           companyId: this.generateCNPJ()
         };
 
-      case 'owner':
+      case UserTypeEnum.OWNER:
         return {
           ...baseUser,
           type,
@@ -71,7 +71,7 @@ export class UserFactory {
           personalId: this.generateCPF()
         };
 
-      case 'salesperson':
+      case UserTypeEnum.SALESPERSON:
         return {
           ...baseUser,
           type,
@@ -79,7 +79,7 @@ export class UserFactory {
           personalLastName: faker.person.lastName(),
           personalId: this.generateCPF(),
           creci: `${faker.number.bigInt({ min: 100000, max: 999999 })}`,
-          creciState: ['GO', 'DF'][Math.floor(Math.random() * 2)]
+          creciState: [StateType.DF, StateType.GO][Math.floor(Math.random() * 2)]
         };
 
       default:
