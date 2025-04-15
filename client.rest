@@ -14,8 +14,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "owner@gmail.com",
-  "password": "Owner@123"
+  "email": "salesperson@gmail.com",
+  "password": "Sales@123"
 }
 
 # Refresh

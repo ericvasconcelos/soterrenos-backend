@@ -1,11 +1,11 @@
 version: '3.8'
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     environment:
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_DB: ${DATABASE_DATABASE}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     ports:
       - '5432:5432'
     volumes:
@@ -15,13 +15,8 @@ services:
     build: .
     ports:
       - '3000:3000'
-    environment:
-      - DB_HOST=postgres
-      - DB_PORT=${DB_PORT}
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - JWT_SECRET=${JWT_SECRET}
+    env_file:
+      - .env.production
     depends_on:
       - postgres
 
