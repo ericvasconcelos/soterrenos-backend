@@ -4,7 +4,7 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
-import { Response } from 'express'; // Importe o tipo Response do Express
+import { Response } from 'express';
 import { Observable } from 'rxjs';
 
 @Injectable()

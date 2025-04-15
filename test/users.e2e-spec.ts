@@ -11,7 +11,7 @@ import { GlobalConfigModule } from 'src/global-config/global-config.module';
 import globalConfig from 'src/global-config/global.config';
 import { LandsModule } from 'src/lands/lands.module';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import { UserTypeEnum } from 'src/users/dto/types';
+import { UserTypesEnum } from 'src/users/dto/types';
 import { UserFactory } from 'src/users/factories/user.factory';
 import { UsersModule } from 'src/users/users.module';
 import * as request from 'supertest';
@@ -31,14 +31,14 @@ const login = async (
 };
 
 const createUserAndLogin = async (app: INestApplication) => {
-  const user = UserFactory.create(UserTypeEnum.OWNER);
+  const user = UserFactory.create(UserTypesEnum.OWNER);
   const newUser = await request(app.getHttpServer()).post('/users').send(user);
   return login(app, { ...user, id: newUser.body.id });
 };
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
-  const createUser = UserFactory.create(UserTypeEnum.OWNER);
+  const createUser = UserFactory.create(UserTypesEnum.OWNER);
   const fakeUUID = '44f2636a-f756-4686-b37b-233b8accd128'
 
   beforeEach(async () => {
@@ -166,7 +166,7 @@ describe('AppController (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .get('/users')
-        .send({ type: UserTypeEnum.OWNER })
+        .send({ type: UserTypesEnum.OWNER })
         .expect(HttpStatus.OK);
 
       expect(response.body).toEqual(

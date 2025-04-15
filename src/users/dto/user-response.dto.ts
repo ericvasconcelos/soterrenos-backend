@@ -1,6 +1,6 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import { ImageDto } from 'src/common/dto';
-import { UserTypeEnum } from './types';
+import { UserTypesEnum } from './types';
 
 @Exclude()
 export class UserResponseDto {
@@ -8,7 +8,7 @@ export class UserResponseDto {
   id: string;
 
   @Expose()
-  type: UserTypeEnum;
+  type: UserTypesEnum;
 
   @Expose()
   email: string;

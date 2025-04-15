@@ -12,14 +12,21 @@ import { filetypeextension } from 'magic-bytes.js';
 import * as path from 'path';
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
 import { HashingService } from 'src/auth/hashing/hashing.service';
+import { ErrorsEnum } from 'src/common/constants/errors.constants';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Land } from 'src/lands/entities/land.entity';
 import { MailService } from 'src/mail/mail.service';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UserTypeEnum } from './dto/types';
+import { UserRolesEnum, UserTypesEnum } from './dto/types';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+
+interface LandCountResult {
+  userId: string;
+  count: string;
+}
+
 
 @Injectable()
 export class UsersService {
@@ -32,13 +39,13 @@ export class UsersService {
     private readonly mailService: MailService,
   ) { }
 
-  async findAllByType(type: UserTypeEnum, paginationDto?: PaginationDto) {
+  async findAllByType(type: UserTypesEnum, paginationDto?: PaginationDto) {
     const page = paginationDto?.page ?? 1;
     const size = paginationDto?.size ?? 10;
     const offset = (page - 1) * size;
 
     const [users, total] = await this.usersRepository.findAndCount({
-      where: { type: type },
+      where: { type },
       order: { createdAt: 'DESC' },
       take: size,
       skip: offset,
@@ -46,24 +53,29 @@ export class UsersService {
 
     const userIds = users.map((user) => user.id);
 
-    const landsCounts = await this.landsRepository
-      .createQueryBuilder('land')
-      .select('land.userId', 'userId')
-      .addSelect('COUNT(land.id)', 'count')
-      .where('land.userId IN (:...userIds)', { userIds })
-      .andWhere('land.active = :active', { active: true })
-      .groupBy('land.userId')
-      .getRawMany();
+    let landsCounts = [];
+    if (userIds.length > 0) {
+      landsCounts = await this.landsRepository
+        .createQueryBuilder('land')
+        .select('land.userId', 'userId') // Nome correto da coluna
+        .addSelect('COUNT(land.id)', 'count')
+        .where('land.userId IN (:...userIds)', { userIds }) // Filtro correto
+        .andWhere('land.active = :active', { active: true })
+        .groupBy('land.userId') // Agrupamento correto
+        .getRawMany();
+    }
 
     const countsMap = new Map<string, number>(
-      landsCounts.map((lc) => [lc.userId, parseInt(lc.count as string, 10)]),
+      (landsCounts as LandCountResult[]).map((lc) => [
+        lc.userId,
+        parseInt(lc.count, 10) || 0 // Usar fallback seguro
+      ])
     );
 
     const data = users.map((user) => ({
       ...user,
       activeLandsCount: countsMap.get(user.id) || 0,
     }));
-
 
     const lastPage = Math.ceil(total / size);
 
@@ -79,14 +91,14 @@ export class UsersService {
 
   async findMe({ sub }: TokenPayloadDto) {
     const user = await this.usersRepository.findOneBy({ id: sub });
-    if (!user) throw new NotFoundException('USER_NOT_FOUND');
+    if (!user) throw new NotFoundException(ErrorsEnum.USER_NOT_FOUND);
     return user;
   }
 
   async findOne(id: string, tokenPayload: TokenPayloadDto) {
     const user = await this.usersRepository.findOneBy({ id });
-    if (!user) throw new NotFoundException('USER_NOT_FOUND');
-    if (user?.id !== tokenPayload?.sub) throw new ForbiddenException('DONT_HAVE_PERMISSION')
+    if (!user) throw new NotFoundException(ErrorsEnum.USER_NOT_FOUND);
+    if (user?.id !== tokenPayload?.sub) throw new ForbiddenException(ErrorsEnum.DONT_HAVE_PERMISSION)
     return user;
   }
 
@@ -96,6 +108,7 @@ export class UsersService {
     try {
       const userData = {
         ...createUserDto,
+        role: UserRolesEnum.USER,
         password: hashedPassword,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -112,7 +125,7 @@ export class UsersService {
       return newUser;
     } catch (error) {
       if (error?.code === '23505') {
-        throw new ConflictException('EMAIL_ALREADY_REGISTERED');
+        throw new ConflictException(ErrorsEnum.EMAIL_ALREADY_REGISTERED);
       }
 
       throw error;
@@ -136,8 +149,8 @@ export class UsersService {
       ...useData
     });
 
-    if (!user) throw new NotFoundException('USER_NOT_FOUND');
-    if (user.id !== tokenPayload?.sub) throw new ForbiddenException('DONT_HAVE_PERMISSION')
+    if (!user) throw new NotFoundException(ErrorsEnum.USER_NOT_FOUND);
+    if (user.id !== tokenPayload?.sub) throw new ForbiddenException(ErrorsEnum.DONT_HAVE_PERMISSION)
 
     await this.usersRepository.save(user);
     return user;
@@ -145,8 +158,8 @@ export class UsersService {
 
   async remove(id: string, tokenPayload: TokenPayloadDto) {
     const user = await this.usersRepository.findOneBy({ id });
-    if (!user) throw new NotFoundException('USER_NOT_FOUND');
-    if (id !== tokenPayload?.sub) throw new ForbiddenException('DONT_HAVE_PERMISSION')
+    if (!user) throw new NotFoundException(ErrorsEnum.USER_NOT_FOUND);
+    if (id !== tokenPayload?.sub) throw new ForbiddenException(ErrorsEnum.DONT_HAVE_PERMISSION)
     await this.usersRepository.remove(user);
     return {
       message: 'USER_DELETED'
@@ -159,11 +172,11 @@ export class UsersService {
   ) {
     const ALLOWED_MIME_TYPES = new Set(['jpeg', 'jpg', 'png']);
 
-    if (file.size < 1024) throw new BadRequestException('FILE_SMALL')
+    if (file.size < 1024) throw new BadRequestException(ErrorsEnum.FILE_SMALL)
 
     const fileTypeExtension = filetypeextension(file.buffer)[0];
     if (!fileTypeExtension || !ALLOWED_MIME_TYPES.has(fileTypeExtension)) {
-      throw new BadRequestException('INVALID_FILE_TYPE');
+      throw new BadRequestException(ErrorsEnum.INVALID_FILE_TYPE);
     }
 
     const fileName = `profile-${tokenPayload.sub}.${fileTypeExtension}`;

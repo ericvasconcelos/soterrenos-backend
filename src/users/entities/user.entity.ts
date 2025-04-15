@@ -6,14 +6,26 @@ import {
   Entity,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { UserRolesEnum, UserTypesEnum } from '../dto/types';
 
 @Entity()
 export abstract class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 20 })
-  type: 'agency' | 'owner' | 'salesperson';
+  @Column({
+    type: 'enum',
+    enum: UserRolesEnum,
+    default: UserRolesEnum.USER,
+  })
+  role: UserRolesEnum;
+
+  @Column({
+    type: 'enum',
+    enum: UserTypesEnum,
+    default: UserTypesEnum.OWNER,
+  })
+  type: UserTypesEnum;
 
   @Column({ unique: true })
   @IsEmail()

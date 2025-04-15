@@ -11,7 +11,7 @@ import { Land } from "src/lands/entities/land.entity";
 import { MailService } from "src/mail/mail.service";
 import { Repository } from "typeorm";
 import { CreateUserDto } from "./dto/create-user.dto";
-import { UserTypeEnum } from "./dto/types";
+import { UserRolesEnum, UserTypesEnum } from "./dto/types";
 import { UserResponseDto } from "./dto/user-response.dto";
 import { User } from "./entities/user.entity";
 import { UserFactory } from "./factories/user.factory";
@@ -31,8 +31,8 @@ describe('UsersService', () => {
   const PASSWORD_HASH = 'hashedPassword'
   const tokenPayload = { sub: mockId } as TokenPayloadDto
 
-  const initialUserOne: CreateUserDto = UserFactory.create(UserTypeEnum.OWNER)
-  const initialUserTwo: CreateUserDto = UserFactory.create(UserTypeEnum.OWNER)
+  const initialUserOne: CreateUserDto = UserFactory.create(UserTypesEnum.OWNER)
+  const initialUserTwo: CreateUserDto = UserFactory.create(UserTypesEnum.OWNER)
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -122,6 +122,7 @@ describe('UsersService', () => {
 
       expect(usersRepository.create).toHaveBeenCalledWith({
         ...initialUserOne,
+        role: UserRolesEnum.USER,
         password: PASSWORD_HASH,
         createdAt: expect.any(Date) as Date,
         updatedAt: expect.any(Date) as Date,
@@ -139,7 +140,7 @@ describe('UsersService', () => {
     });
 
     it('should create salesperson user type', async () => {
-      const salesperson = UserFactory.create(UserTypeEnum.SALESPERSON)
+      const salesperson = UserFactory.create(UserTypesEnum.SALESPERSON)
       const result = await usersService.create(salesperson);
 
       expect(hashingService.hash).toHaveBeenCalledWith(salesperson.password)
@@ -147,6 +148,7 @@ describe('UsersService', () => {
       expect(usersRepository.create).toHaveBeenCalledWith({
         ...salesperson,
         password: PASSWORD_HASH,
+        role: UserRolesEnum.USER,
         createdAt: expect.any(Date) as Date,
         updatedAt: expect.any(Date) as Date,
       })
@@ -163,7 +165,7 @@ describe('UsersService', () => {
     });
 
     it('should create agency user type', async () => {
-      const agency = UserFactory.create(UserTypeEnum.AGENCY)
+      const agency = UserFactory.create(UserTypesEnum.AGENCY)
       const result = await usersService.create(agency);
 
       expect(hashingService.hash).toHaveBeenCalledWith(agency.password)
@@ -171,6 +173,7 @@ describe('UsersService', () => {
       expect(usersRepository.create).toHaveBeenCalledWith({
         ...agency,
         password: PASSWORD_HASH,
+        role: UserRolesEnum.USER,
         createdAt: expect.any(Date) as Date,
         updatedAt: expect.any(Date) as Date,
       })
@@ -231,7 +234,7 @@ describe('UsersService', () => {
 
   describe('findAllByType', () => {
     it('should return all users', async () => {
-      const result = await usersService.findAllByType(UserTypeEnum.OWNER);
+      const result = await usersService.findAllByType(UserTypesEnum.OWNER);
       expect(result.data).toEqual([
         expect.objectContaining({
           ...initialUserOne,
@@ -254,7 +257,7 @@ describe('UsersService', () => {
 
     it('should return empty array', async () => {
       jest.spyOn(usersRepository, 'findAndCount').mockResolvedValue([[], 0])
-      const result = await usersService.findAllByType(UserTypeEnum.OWNER);
+      const result = await usersService.findAllByType(UserTypesEnum.OWNER);
       expect(result.data.length).toEqual(0);
     });
   });
@@ -336,9 +339,11 @@ describe('UsersService', () => {
 
       jest.spyOn(magicBytes, 'filetypeextension').mockReturnValue(['png'])
 
+
       jest.spyOn(usersService, 'update').mockResolvedValue({
         ...initialUserOne,
         id: mockId,
+        role: UserRolesEnum.USER,
         profileImage: {
           src: fileFullPath
         },

@@ -17,7 +17,6 @@ export class ErrorExecptionFilter implements ExceptionFilter {
       ? exception.getStatus()
       : 400;
 
-    // Works only with BadRequestException error
     const exceptionResponse = exception.getResponse
       ? exception.getResponse()
       : { message: 'Error', statusCode };

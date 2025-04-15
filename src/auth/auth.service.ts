@@ -1,8 +1,9 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HashingService } from 'src/auth/hashing/hashing.service';
+import { ErrorsEnum } from 'src/common/constants/errors.constants';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import jwtConfig from './config/jwt.config';
@@ -26,14 +27,14 @@ export class AuthService {
       email: loginDto.email
     })
 
-    if (!user) throw new UnauthorizedException('USER_NOT_FOUND')
+    if (!user) throw new BadRequestException(ErrorsEnum.USER_NOT_FOUND)
 
     const passwordIsValid = await this.hashingService.compare(
       loginDto.password,
       user.password
     )
 
-    if (!passwordIsValid) throw new UnauthorizedException('INVALID_PASSWORD')
+    if (!passwordIsValid) throw new BadRequestException(ErrorsEnum.INVALID_PASSWORD)
 
     return this.createToken(user)
   }
@@ -84,7 +85,7 @@ export class AuthService {
       )
 
       const user = await this.usersRespository.findOneBy({ id: sub })
-      if (!user) throw new UnauthorizedException('USER_NOT_FOUND')
+      if (!user) throw new UnauthorizedException(ErrorsEnum.USER_NOT_FOUND)
 
       return this.createToken(user);
     } catch (error) {

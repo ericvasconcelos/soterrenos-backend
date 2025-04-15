@@ -14,11 +14,11 @@ import {
 import { ImageDto } from 'src/common/dto';
 import { IsCNPJ } from '../decorators/cnpj.decorator';
 import { IsCPF } from '../decorators/cpf.decorator';
-import { StateType, UserTypeEnum } from './types';
+import { StateType, UserTypesEnum } from './types';
 
 export class CreateUserDto {
   @IsEnum(['agency', 'owner', 'salesperson'])
-  type: UserTypeEnum;
+  type: UserTypesEnum;
 
   @IsEmail()
   email: string;

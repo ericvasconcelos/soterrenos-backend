@@ -1,5 +1,5 @@
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
-import { UserTypeEnum } from './dto/types';
+import { UserRolesEnum, UserTypesEnum } from './dto/types';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { UserFactory } from './factories/user.factory';
@@ -17,7 +17,7 @@ describe('UsersController', () => {
     uploadPicture: jest.fn(),
   } as unknown as UsersService;
 
-  const createUser = UserFactory.create(UserTypeEnum.OWNER)
+  const createUser = UserFactory.create(UserTypesEnum.OWNER)
 
   beforeEach(() => {
     controller = new UsersController(usersServiceMock);
@@ -26,6 +26,7 @@ describe('UsersController', () => {
   it('create', async () => {
     const expected = {
       ...createUser,
+      role: UserRolesEnum.USER,
       id: '1'
     }
     jest.spyOn(usersServiceMock, 'create').mockResolvedValue(expected);
@@ -47,7 +48,7 @@ describe('UsersController', () => {
 
   it('findAllByType', async () => {
     const expected = {
-      data: [{ ...createUser, id: '1', activeLandsCount: 1 }],
+      data: [{ ...createUser, role: UserRolesEnum.USER, id: '1', activeLandsCount: 1 }],
       count: 1,
       currentPage: 1,
       lastPage: 1,
@@ -55,7 +56,7 @@ describe('UsersController', () => {
       prevPage: null,
     };
     jest.spyOn(usersServiceMock, 'findAllByType').mockResolvedValue(expected);
-    const result = await controller.findAllByType({ type: UserTypeEnum.OWNER });
+    const result = await controller.findAllByType(UserTypesEnum.OWNER);
     expect(usersServiceMock.create).toHaveBeenCalled();
     expect(result).toEqual(expect.objectContaining({
       count: 1,
@@ -80,7 +81,7 @@ describe('UsersController', () => {
   it('findOne', async () => {
     const id = '1';
     const tokenPayload = { sub: id } as TokenPayloadDto;
-    const expected = { ...createUser, id: '1' };
+    const expected = { ...createUser, role: UserRolesEnum.USER, id: '1' };
     jest.spyOn(usersServiceMock, 'findOne').mockResolvedValue(expected);
     const result = await controller.findOne(id, tokenPayload);
     expect(usersServiceMock.findOne).toHaveBeenCalledWith(id, tokenPayload);
@@ -102,9 +103,11 @@ describe('UsersController', () => {
     const userDto = { personalFirstName: 'new value' } as UpdateUserDto;
     const tokenPayload = { sub: 'value' } as TokenPayloadDto;
     const expected = { ...createUser, id: '1' };
+
     jest.spyOn(usersServiceMock, 'update').mockResolvedValue({
       ...expected,
       ...userDto,
+      role: UserRolesEnum.USER
     });
     const result = await controller.update(id, userDto, tokenPayload);
     expect(usersServiceMock.update).toHaveBeenCalledWith(id, userDto, tokenPayload);

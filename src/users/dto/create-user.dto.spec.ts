@@ -2,12 +2,12 @@ import { validate } from 'class-validator';
 import 'reflect-metadata';
 import { UserFactory } from './../factories/user.factory';
 import { CreateUserDto } from './create-user.dto';
-import { UserTypeEnum } from './types';
+import { UserTypesEnum } from './types';
 
 describe('CreateUserDto', () => {
   it('should be a valid owner user', async () => {
     const dto = new CreateUserDto();
-    const user = UserFactory.create(UserTypeEnum.OWNER)
+    const user = UserFactory.create(UserTypesEnum.OWNER)
     dto.type = user.type;
     dto.email = user.email;
     dto.personalFirstName = user.personalFirstName;
@@ -23,13 +23,14 @@ describe('CreateUserDto', () => {
       alt: 'Image Picture'
     }
 
+
     const errors = await validate(dto);
     expect(errors.length).toBe(0);
   });
 
   it('should be a valid salesperson user', async () => {
     const dto = new CreateUserDto();
-    const user = UserFactory.create(UserTypeEnum.SALESPERSON)
+    const user = UserFactory.create(UserTypesEnum.SALESPERSON)
     dto.type = user.type;
     dto.email = user.email;
     dto.personalFirstName = user.personalFirstName;
@@ -47,7 +48,7 @@ describe('CreateUserDto', () => {
 
   it('should be a valid agency user', async () => {
     const dto = new CreateUserDto();
-    const user = UserFactory.create(UserTypeEnum.AGENCY)
+    const user = UserFactory.create(UserTypesEnum.AGENCY)
     dto.type = user.type;
     dto.email = user.email;
     dto.legalName = user.legalName;
@@ -64,7 +65,7 @@ describe('CreateUserDto', () => {
 
   it('deve falhar se o email for inválido', async () => {
     const dto = new CreateUserDto();
-    dto.type = UserTypeEnum.OWNER;
+    dto.type = UserTypesEnum.OWNER;
     dto.email = 'teste@gm';
     dto.personalFirstName = '1';
     dto.personalLastName = '2';

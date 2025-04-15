@@ -22,9 +22,9 @@ import { TokenPayloadParam } from 'src/auth/params/token-payload.params';
 import { DeleteResponseDto } from 'src/common/dto/delete-response.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UserTypesEnum } from './dto/types';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
-import { UserByTypeDto } from './dto/users-by-type.dto';
 import { UsersResponseDto } from './dto/users-response.dto';
 import { UsersService } from './users.service';
 
@@ -32,9 +32,9 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
-  @Get()
-  async findAllByType(@Body() body: UserByTypeDto, @Query() paginationDto?: PaginationDto): Promise<UsersResponseDto> {
-    const users = await this.usersService.findAllByType(body.type, paginationDto);
+  @Get('type/:type')
+  async findAllByType(@Param('type') type: UserTypesEnum, @Query() paginationDto?: PaginationDto): Promise<UsersResponseDto> {
+    const users = await this.usersService.findAllByType(type, paginationDto);
     return plainToInstance(UsersResponseDto, users)
   }
 

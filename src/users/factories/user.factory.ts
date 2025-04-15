@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { CreateUserDto } from '../dto/create-user.dto';
-import { StateType, UserTypeEnum } from '../dto/types';
+import { StateType, UserTypesEnum } from '../dto/types';
 
 export class UserFactory {
   private static generateCPF(formatted: boolean = true): string {
@@ -37,8 +37,9 @@ export class UserFactory {
       : cnpj;
   };
 
-  static create(type: UserTypeEnum, hasProfilemage: boolean = false): CreateUserDto {
+  static create(type: UserTypesEnum, hasProfilemage: boolean = false): CreateUserDto {
     const baseUser = {
+      type,
       email: faker.internet.email(),
       password: faker.internet.password({ length: 10, prefix: '#1A' }),
       phoneNumber: faker.helpers.fromRegExp(/([0-9]{2}) [0-9]{5}-[0-9]{4}/),
@@ -53,28 +54,17 @@ export class UserFactory {
     const companyName = faker.company.name();
 
     switch (type) {
-      case UserTypeEnum.AGENCY:
+      case UserTypesEnum.AGENCY:
         return {
           ...baseUser,
-          type,
           legalName: `${companyName} LTDA`,
           tradeName: companyName,
           companyId: this.generateCNPJ()
         };
 
-      case UserTypeEnum.OWNER:
+      case UserTypesEnum.SALESPERSON:
         return {
           ...baseUser,
-          type,
-          personalFirstName: faker.person.firstName(),
-          personalLastName: faker.person.lastName(),
-          personalId: this.generateCPF()
-        };
-
-      case UserTypeEnum.SALESPERSON:
-        return {
-          ...baseUser,
-          type,
           personalFirstName: faker.person.firstName(),
           personalLastName: faker.person.lastName(),
           personalId: this.generateCPF(),
@@ -83,7 +73,12 @@ export class UserFactory {
         };
 
       default:
-        throw new Error('Invalid user type');
+        return {
+          ...baseUser,
+          personalFirstName: faker.person.firstName(),
+          personalLastName: faker.person.lastName(),
+          personalId: this.generateCPF()
+        };
     }
   }
 }

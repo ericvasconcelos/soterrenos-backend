@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { TokenPayloadDto } from 'src/auth/dto/token-payload.dto';
+import { ErrorsEnum } from 'src/common/constants/errors.constants';
 import { LandSizeDto } from 'src/common/dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { User } from 'src/users/entities/user.entity';
@@ -88,27 +89,37 @@ export class LandsService {
         },
       },
     });
+
     return lands;
   }
 
   async findOne(id: string) {
     const land = await this.landsRepository.findOne({
       where: { id },
+      order: { id: 'desc' },
       relations: ['user'],
-      order: {
-        id: 'desc',
-      },
       select: {
         user: {
           id: true,
+          type: true,
           personalFirstName: true,
           personalLastName: true,
           tradeName: true,
+          phoneNumber: true,
+          whatsappNumber: true,
+          email: true,
+          creci: true,
+          profileImage: {
+            src: true,
+            width: true,
+            height: true,
+            alt: true,
+          },
         },
       },
     });
 
-    if (!land) throw new NotFoundException('LAND_NOT_FOUND');
+    if (!land) throw new NotFoundException(ErrorsEnum.LAND_NOT_FOUND);
     return land;
   }
 
@@ -116,7 +127,7 @@ export class LandsService {
     const slug = await this.generateUniqueSlug(createLandDto.title);
     const user = await this.usersRepository.findOneBy({ id: tokenPayload?.sub });
 
-    if (!user || !user?.id) throw new NotFoundException('USER_NOT_FOUND');
+    if (!user || !user?.id) throw new NotFoundException(ErrorsEnum.USER_NOT_FOUND);
 
     const land = this.landsRepository.create({
       ...createLandDto,
@@ -139,9 +150,9 @@ export class LandsService {
     const land = await this.findOne(id);
     const user = await this.usersRepository.findOneBy({ id: tokenPayload?.sub })
 
-    if (!land) throw new NotFoundException('LAND_NOT_FOUND');
-    if (!user) throw new NotFoundException('USER_NOT_FOUND');
-    if (user?.id !== land?.user?.id) throw new ForbiddenException('DONT_HAVE_PERMISSION');
+    if (!land) throw new NotFoundException(ErrorsEnum.LAND_NOT_FOUND);
+    if (!user) throw new NotFoundException(ErrorsEnum.USER_NOT_FOUND);
+    if (user?.id !== land?.user?.id) throw new ForbiddenException(ErrorsEnum.DONT_HAVE_PERMISSION);
 
     if (updateLandDto?.title && land?.title !== updateLandDto.title) {
       land.slug = await this.generateUniqueSlug(updateLandDto.title, id);
@@ -163,11 +174,11 @@ export class LandsService {
 
   async remove(id: string, tokenPayload: TokenPayloadDto) {
     const land = await this.findOne(id);
-    if (!land) throw new NotFoundException('LAND_NOT_FOUND');
+    if (!land) throw new NotFoundException(ErrorsEnum.LAND_NOT_FOUND);
 
     const user = await this.usersRepository.findOneBy({ id: tokenPayload?.sub })
-    if (!user) throw new NotFoundException('USER_NOT_FOUND');
-    if (user?.id !== land?.user?.id) throw new ForbiddenException('DONT_HAVE_PERMISSION');
+    if (!user) throw new NotFoundException(ErrorsEnum.USER_NOT_FOUND);
+    if (user?.id !== land?.user?.id) throw new ForbiddenException(ErrorsEnum.DONT_HAVE_PERMISSION);
 
     await this.landsRepository.remove(land);
 
@@ -187,7 +198,6 @@ export class LandsService {
         const fileName = `${randomUUID()}.${fileExtension}`;
         const fileFullPath = path.resolve(process.cwd(), 'pictures', fileName);
 
-        // Escreve o arquivo e retorna o caminho completo
         await fs.writeFile(fileFullPath, file.buffer);
         return { src: `/pictures/${fileName}` }
       });
@@ -196,7 +206,7 @@ export class LandsService {
       return result;
     } catch (error) {
       console.log(error.message)
-      throw new InternalServerErrorException('UPLOAD_FILES_FAILED');
+      throw new InternalServerErrorException(ErrorsEnum.UPLOAD_FILES_FAILED);
     }
   }
 
@@ -233,13 +243,11 @@ export class LandsService {
     const size = queryLandDto?.size ?? 10;
     const offset = (page - 1) * size;
 
-    // Construir query dinâmica
     const queryBuilder = this.landsRepository.createQueryBuilder('land')
-      .where("land.address->>'state' = :state", { state }) // Acessa o campo state do JSONB
+      .where("land.address->>'state' = :state", { state })
       .andWhere("land.address->>'city' = :city", { city })
       .andWhere("land.address->>'neighborhood' = :neighborhood", { neighborhood });
 
-    // Aplicar filtros numéricos
     if (queryLandDto?.minPrice || queryLandDto?.maxPrice) {
       queryBuilder.andWhere('land.price BETWEEN COALESCE(:minPrice, land.price) AND COALESCE(:maxPrice, land.price)', {
         minPrice: queryLandDto?.minPrice,

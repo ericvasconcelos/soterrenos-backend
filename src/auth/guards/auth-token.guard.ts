@@ -5,6 +5,7 @@ import { Request } from "express";
 import jwtConfig from "../config/jwt.config";
 import { REQUEST_TOKEN_PAYLOAD_KEY } from "../constants.auth";
 import { TokenPayloadDto } from "../dto/token-payload.dto";
+import { ErrorsEnum } from "src/common/constants/errors.constants";
 
 @Injectable()
 export class AuthTokenGuard implements CanActivate {
@@ -18,7 +19,7 @@ export class AuthTokenGuard implements CanActivate {
     const request: Request = context.switchToHttp().getRequest()
     const token = this.extractTokenFromHeader(request)
 
-    if (!token) throw new UnauthorizedException('UNAUTHORIZED')
+    if (!token) throw new UnauthorizedException(ErrorsEnum.UNAUTHORIZED)
 
     try {
       const payload: TokenPayloadDto = await this.jwtService.verifyAsync(token, this.jwtConfiguration);
