@@ -97,7 +97,7 @@ export class UsersController {
     },
   })
   @UseInterceptors(FileInterceptor('file'))
-  @Post('upload-picture')
+  @Post('upload-profile-image')
   async uploadPicture(
     @UploadedFile(
       new ParseFilePipeBuilder()

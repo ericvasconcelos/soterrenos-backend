@@ -38,7 +38,7 @@ GET {{baseUrl}}/users?page=1&size=10
 Content-Type: application/json
 
 {
-  "type": "owner"
+  "type": "salesperson"
 }
 
 ### findMe
@@ -208,7 +208,7 @@ Authorization: Bearer {{authToken}}
 
 # Upload
 ### uploadPicture
-POST {{baseUrl}}/users/upload-picture/
+POST {{baseUrl}}/users/upload-profile-image/
 Authorization: Bearer {{authToken}}
 Content-Type: multipart/form-data; boundary=----BoundaryDelimitadorHttp
 
