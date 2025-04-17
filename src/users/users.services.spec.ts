@@ -2,11 +2,12 @@ import { faker } from "@faker-js/faker/.";
 import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
-import * as fs from 'fs/promises';
 import * as magicBytes from 'magic-bytes.js';
 import * as path from 'path';
+import * as sharp from 'sharp';
 import { TokenPayloadDto } from "src/auth/dto/token-payload.dto";
 import { HashingService } from "src/auth/hashing/hashing.service";
+import { ErrorsEnum } from "src/common/constants/errors.constants";
 import { Land } from "src/lands/entities/land.entity";
 import { MailService } from "src/mail/mail.service";
 import { Repository } from "typeorm";
@@ -17,8 +18,14 @@ import { User } from "./entities/user.entity";
 import { UserFactory } from "./factories/user.factory";
 import { UsersService } from "./users.service";
 
-jest.mock('fs/promises');
 jest.mock('magic-bytes.js');
+
+jest.mock('sharp', () => {
+  const mockSharp = {
+    metadata: jest.fn().mockResolvedValue({ width: 800, height: 600 }),
+  };
+  return jest.fn(() => mockSharp);
+});
 
 describe('UsersService', () => {
   let usersService: UsersService;
@@ -30,6 +37,7 @@ describe('UsersService', () => {
   const mockId2 = faker.string.uuid();
   const PASSWORD_HASH = 'hashedPassword'
   const tokenPayload = { sub: mockId } as TokenPayloadDto
+  const mockBucketName = 'test-bucket';
 
   const initialUserOne: CreateUserDto = UserFactory.create(UserTypesEnum.OWNER)
   const initialUserTwo: CreateUserDto = UserFactory.create(UserTypesEnum.OWNER)
@@ -38,6 +46,10 @@ describe('UsersService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
+        {
+          provide: 'BUCKET_NAME',
+          useValue: mockBucketName,
+        },
         {
           provide: getRepositoryToken(User),
           useValue: {
@@ -195,7 +207,7 @@ describe('UsersService', () => {
       });
 
       await expect(usersService.create(initialUserOne)).rejects.toThrow(ConflictException);
-      await expect(usersService.create(initialUserOne)).rejects.toThrow('EMAIL_ALREADY_REGISTERED');
+      await expect(usersService.create(initialUserOne)).rejects.toThrow(ErrorsEnum.EMAIL_ALREADY_REGISTERED);
     });
 
     it('should throw other errors', async () => {
@@ -228,7 +240,7 @@ describe('UsersService', () => {
     it('should throw other errors', async () => {
       jest.spyOn(usersRepository, 'findOneBy').mockResolvedValue(null);
       await expect(usersService.findOne('1', tokenPayload)).rejects.toThrow(NotFoundException);
-      await expect(usersService.findOne('1', tokenPayload)).rejects.toThrow('USER_NOT_FOUND');
+      await expect(usersService.findOne('1', tokenPayload)).rejects.toThrow(ErrorsEnum.USER_NOT_FOUND);
     });
   });
 
@@ -287,7 +299,7 @@ describe('UsersService', () => {
       jest.spyOn(usersRepository, 'preload').mockResolvedValue(undefined)
 
       await expect(usersService.update(mockId, updateUser, tokenPayload)).rejects.toThrow(NotFoundException)
-      await expect(usersService.update(mockId, updateUser, tokenPayload)).rejects.toThrow('USER_NOT_FOUND')
+      await expect(usersService.update(mockId, updateUser, tokenPayload)).rejects.toThrow(ErrorsEnum.USER_NOT_FOUND)
     });
 
 
@@ -296,7 +308,7 @@ describe('UsersService', () => {
       const tokenPayload = { sub: '1234' } as TokenPayloadDto
 
       await expect(usersService.update(mockId, updateUser, tokenPayload)).rejects.toThrow(ForbiddenException)
-      await expect(usersService.update(mockId, updateUser, tokenPayload)).rejects.toThrow('DONT_HAVE_PERMISSION')
+      await expect(usersService.update(mockId, updateUser, tokenPayload)).rejects.toThrow(ErrorsEnum.DONT_HAVE_PERMISSION)
     });
   });
 
@@ -314,7 +326,7 @@ describe('UsersService', () => {
       jest.spyOn(usersRepository, 'findOneBy').mockResolvedValue(null)
 
       await expect(usersService.remove(mockId, tokenPayload)).rejects.toThrow(NotFoundException)
-      await expect(usersService.remove(mockId, tokenPayload)).rejects.toThrow('USER_NOT_FOUND')
+      await expect(usersService.remove(mockId, tokenPayload)).rejects.toThrow(ErrorsEnum.USER_NOT_FOUND)
     });
 
 
@@ -322,23 +334,22 @@ describe('UsersService', () => {
       const currTokenPayload = { sub: '1234' } as TokenPayloadDto
 
       await expect(usersService.remove(mockId, currTokenPayload)).rejects.toThrow(ForbiddenException)
-      await expect(usersService.remove(mockId, currTokenPayload)).rejects.toThrow('DONT_HAVE_PERMISSION')
+      await expect(usersService.remove(mockId, currTokenPayload)).rejects.toThrow(ErrorsEnum.DONT_HAVE_PERMISSION)
     });
   });
 
   describe('uploadPicture', () => {
+    const tokenPayload = { sub: mockId } as TokenPayloadDto
+    const mockFile = {
+      originalname: 'test.png',
+      size: 2000,
+      buffer: Buffer.from('test-buffer'),
+    } as Express.Multer.File;
+
+    const fileFullPath = path.resolve(process.cwd(), 'pictures', `profile-${tokenPayload.sub}.png`);
+
     it('should upload profile image of user', async () => {
-      const tokenPayload = { sub: mockId } as TokenPayloadDto
-      const mockFile = {
-        originalname: 'test.png',
-        size: 2000,
-        buffer: Buffer.from('file content'),
-      }
-
-      const fileFullPath = path.resolve(process.cwd(), 'pictures', `profile-${tokenPayload.sub}.png`);
-
       jest.spyOn(magicBytes, 'filetypeextension').mockReturnValue(['png'])
-
 
       jest.spyOn(usersService, 'update').mockResolvedValue({
         ...initialUserOne,
@@ -349,9 +360,8 @@ describe('UsersService', () => {
         },
       });
 
+      const result = await usersService.uploadPicture(mockFile, tokenPayload);
 
-      const result = await usersService.uploadPicture(mockFile as Express.Multer.File, tokenPayload);
-      expect(fs.writeFile).toHaveBeenCalledWith(fileFullPath, mockFile.buffer);
       expect(result).toEqual(expect.objectContaining({
         ...initialUserOne,
         id: mockId,
@@ -363,28 +373,24 @@ describe('UsersService', () => {
 
 
     it('should throw BadRequestException for small files', async () => {
-      const tokenPayload = { sub: mockId } as TokenPayloadDto
-      const mockFile = {
-        originalname: 'test.png',
-        size: 1023,
-        buffer: Buffer.from('file content'),
-      }
+      const smallFile = { ...mockFile, size: 500 };
 
-      await expect(usersService.uploadPicture(mockFile as Express.Multer.File, tokenPayload)).rejects.toThrow(BadRequestException);
-      await expect(usersService.uploadPicture(mockFile as Express.Multer.File, tokenPayload)).rejects.toThrow('FILE_SMALL');
+      await expect(usersService.uploadPicture(smallFile, tokenPayload)).rejects.toThrow(BadRequestException);
+      await expect(usersService.uploadPicture(smallFile, tokenPayload)).rejects.toThrow(ErrorsEnum.FILE_SMALL);
     });
 
     it('should throw BadRequestException for invalid file type', async () => {
-      const tokenPayload = { sub: mockId } as TokenPayloadDto
-      const mockFile = {
-        originalname: 'test.png',
-        size: 2000,
-        buffer: Buffer.from('file content'),
-      }
-
       jest.spyOn(magicBytes, 'filetypeextension').mockReturnValue(['webp'])
-      await expect(usersService.uploadPicture(mockFile as Express.Multer.File, tokenPayload)).rejects.toThrow(BadRequestException);
-      await expect(usersService.uploadPicture(mockFile as Express.Multer.File, tokenPayload)).rejects.toThrow('INVALID_FILE_TYPE');
+      await expect(usersService.uploadPicture(mockFile, tokenPayload)).rejects.toThrow(BadRequestException);
+      await expect(usersService.uploadPicture(mockFile, tokenPayload)).rejects.toThrow(ErrorsEnum.INVALID_FILE_TYPE);
+    });
+
+
+    it('should handle sharp metadata errors', async () => {
+      jest.spyOn(sharp('buffer'), 'metadata').mockRejectedValueOnce(new Error('Invalid image'));
+
+      await expect(usersService.uploadPicture(mockFile, tokenPayload))
+        .rejects.toThrow(ErrorsEnum.INVALID_FILE_TYPE);
     });
   });
 });

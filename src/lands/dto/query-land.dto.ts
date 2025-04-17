@@ -25,7 +25,7 @@ export class QueryLandDto {
   @Type(() => Number)
   page?: number;
 
-  // Filtros numéricos
+  // Numeric Filters
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
@@ -54,7 +54,7 @@ export class QueryLandDto {
   @IsBooleanString()
   financingAvailable?: string;
 
-  // Infrastructure filters
+  // Infrastructure Filters
   @IsOptional()
   @IsBooleanString()
   hasWater?: string;

@@ -96,14 +96,13 @@ export class LandsController {
     return plainToInstance(LandsResponseDto, land)
   }
 
-  @Get(':state/:city/:neighborhood')
+  @Get(':state/:city')
   async searchLands(
     @Param('state') state: string,
     @Param('city') city: string,
-    @Param('neighborhood') neighborhood: string,
     @Query() queryLandDto?: QueryLandDto
   ) {
-    const lands = await this.landsService.searchLands(state, city, neighborhood, queryLandDto);
+    const lands = await this.landsService.searchLands(state, city, queryLandDto);
     return plainToInstance(LandsResponseDto, lands)
   }
 }

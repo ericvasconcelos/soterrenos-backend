@@ -239,3 +239,12 @@ Content-Type: image/png
 
 ### Get Pictures
 GET {{baseUrl}}/pictures/7c25de3c-281e-4ad6-8f90-8cf2ba642d34.png
+
+
+####################################################
+### LOCATIONS
+####################################################
+
+# @name LocationsController
+### getActiveLocations
+GET {{baseUrl}}/locations

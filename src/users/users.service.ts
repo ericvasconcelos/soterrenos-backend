@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-
-
 import {
   BadRequestException,
   ConflictException,
@@ -61,18 +59,18 @@ export class UsersService {
     if (userIds.length > 0) {
       landsCounts = await this.landsRepository
         .createQueryBuilder('land')
-        .select('land.userId', 'userId') // Nome correto da coluna
+        .select('land.userId', 'userId')
         .addSelect('COUNT(land.id)', 'count')
-        .where('land.userId IN (:...userIds)', { userIds }) // Filtro correto
+        .where('land.userId IN (:...userIds)', { userIds })
         .andWhere('land.active = :active', { active: true })
-        .groupBy('land.userId') // Agrupamento correto
+        .groupBy('land.userId')
         .getRawMany();
     }
 
     const countsMap = new Map<string, number>(
       (landsCounts as LandCountResult[]).map((lc) => [
         lc.userId,
-        parseInt(lc.count, 10) || 0 // Usar fallback seguro
+        parseInt(lc.count, 10) || 0
       ])
     );
 
@@ -177,28 +175,27 @@ export class UsersService {
     const ALLOWED_MIME_TYPES = new Set(['jpeg', 'jpg', 'png']);
     const MIN_SIZE = 1024; // 1KB
 
-    // Verificação básica de tamanho
+    // Verify size
     if (file.size < MIN_SIZE) {
       throw new BadRequestException(ErrorsEnum.FILE_SMALL);
     }
 
-    // Detecta extensão usando magic-bytes.js
+    // Dectect extension type
     const [detectedType] = filetypeextension(file.buffer);
     if (!detectedType || !ALLOWED_MIME_TYPES.has(detectedType)) {
       throw new BadRequestException(ErrorsEnum.INVALID_FILE_TYPE);
     }
 
-    // Gera o nome do arquivo baseado no ID do usuário
+    // Generate file name with user id
     const fileName = `${file.originalname.split('.')[0]}-${tokenPayload.sub}.${detectedType}`;
     const fileRef = bucket.file(fileName);
 
-    // Verifica se já existe arquivo com o mesmo nome
     const [exists] = await fileRef.exists();
     if (exists) {
       throw new ConflictException(ErrorsEnum.FILE_ALREADY_EXISTS);
     }
 
-    // Processa imagem para obter metadados (com segurança)
+    // get metadata from image
     let metadata: sharp.Metadata;
     try {
       metadata = await sharp(file.buffer).metadata();
@@ -206,7 +203,6 @@ export class UsersService {
       throw new BadRequestException(ErrorsEnum.INVALID_FILE_TYPE);
     }
 
-    // Faz upload para o bucket
     try {
       await fileRef.save(file.buffer);
     } catch (err) {

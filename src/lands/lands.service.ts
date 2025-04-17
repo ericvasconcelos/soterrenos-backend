@@ -250,15 +250,14 @@ export class LandsService {
     };
   }
 
-  async searchLands(state: string, city: string, neighborhood: string, queryLandDto?: QueryLandDto) {
+  async searchLands(state: string, city: string, queryLandDto?: QueryLandDto) {
     const page = queryLandDto?.page ?? 1;
-    const size = queryLandDto?.size ?? 10;
+    const size = queryLandDto?.size ?? 20;
     const offset = (page - 1) * size;
 
     const queryBuilder = this.landsRepository.createQueryBuilder('land')
       .where("land.address->>'state' = :state", { state })
-      .andWhere("land.address->>'city' = :city", { city })
-      .andWhere("land.address->>'neighborhood' = :neighborhood", { neighborhood });
+      .andWhere("land.address->>'city' = :city", { city });
 
     if (queryLandDto?.minPrice || queryLandDto?.maxPrice) {
       queryBuilder.andWhere('land.price BETWEEN COALESCE(:minPrice, land.price) AND COALESCE(:maxPrice, land.price)', {
