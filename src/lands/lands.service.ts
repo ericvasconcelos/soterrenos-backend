@@ -11,6 +11,7 @@ import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateLandDto } from './dto/create-land.dto';
 import { QueryLandDto } from './dto/query-land.dto';
+import { QueryUserLandsDto } from './dto/query-user-land.dto';
 import { UpdateLandDto } from './dto/update-land.dto';
 import { Land } from './entities/land.entity';
 
@@ -210,13 +211,15 @@ export class LandsService {
     }
   }
 
-  async findLandsByUser(id: string, paginationDto?: PaginationDto) {
-    const page = paginationDto?.page ?? 1;
-    const size = paginationDto?.size ?? 10;
+  async findLandsByUser(id: string, queryUserLands?: QueryUserLandsDto) {
+    const active = queryUserLands?.active === 'true';
+    const page = queryUserLands?.page ?? 1;
+    const size = queryUserLands?.size ?? 10;
     const offset = (page - 1) * size;
 
-    const lands = await this.landsRepository.find({
+    const [lands, total] = await this.landsRepository.findAndCount({
       where: {
+        active,
         user: { id }
       },
       take: size,
@@ -235,7 +238,16 @@ export class LandsService {
       },
     });
 
-    return lands;
+    const lastPage = Math.ceil(total / size);
+
+    return {
+      data: lands,
+      count: total,
+      currentPage: page,
+      lastPage,
+      nextPage: page + 1 > lastPage ? null : page + 1,
+      prevPage: page - 1 < 1 ? null : page - 1,
+    };
   }
 
   async searchLands(state: string, city: string, neighborhood: string, queryLandDto?: QueryLandDto) {

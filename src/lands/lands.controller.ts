@@ -23,6 +23,7 @@ import { CreateLandDto } from './dto/create-land.dto';
 import { LandResponseDto } from './dto/land-response.dto';
 import { LandsResponseDto } from './dto/lands-response.dto';
 import { QueryLandDto } from './dto/query-land.dto';
+import { QueryUserLandsDto } from './dto/query-user-land.dto';
 import { UpdateLandDto } from './dto/update-land.dto';
 import { LandsService } from './lands.service';
 
@@ -90,9 +91,9 @@ export class LandsController {
   }
 
   @Get('user/:id')
-  async findLandsByUser(@Param('id') id: string, @Query() paginationDto?: PaginationDto): Promise<LandResponseDto[]> {
-    const land = await this.landsService.findLandsByUser(id, paginationDto);
-    return plainToInstance(LandResponseDto, land)
+  async findLandsByUser(@Param('id') id: string, @Query() queryUserLands?: QueryUserLandsDto): Promise<LandsResponseDto> {
+    const land = await this.landsService.findLandsByUser(id, queryUserLands);
+    return plainToInstance(LandsResponseDto, land)
   }
 
   @Get(':state/:city/:neighborhood')
